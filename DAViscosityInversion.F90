@@ -349,7 +349,36 @@ SUBROUTINE ScaleViscosity( Model,Solver,dt,Transient )
 !------------------------------------------------------------------------------
 !    Local variables
 !------------------------------------------------------------------------------
+  TYPE(ValueList_t),POINTER :: Params
+  TYPE(Solver_t), POINTER :: PSolver
+  TYPE(Mesh_t), POINTER :: Mesh
+  CHARACTER(LEN=MAX_NAME_LEN) :: VarName, OldVarName, Name, &
+      LevelsetName, TargetName
+  INTEGER :: i,j,k,l,n,dim,Dofs,dof,itop,ibot,iup,jup,lup,ii,jj,Rounds,nsize,layer, &
+      ActiveDirection,elem,TopNodes,NoVar,BotNodes
+  INTEGER, POINTER :: MaskPerm(:),TopPointer(:),BotPointer(:),UpPointer(:),DownPointer(:),&
+      NodeIndexes(:),TargetPointer(:),BotPerm(:),ThickPerm(:),&
+      PermOut(:),PermIn(:),LevelsetPerm(:),TopPerm(:),UnitPerm(:)=>NULL()
+  LOGICAL :: GotIt, Found, Visited = .FALSE., Initialized = .FALSE.,&
+      Debug, MaskExist, GotVar, GotOldVar, &
+      FirstTime = .TRUE.
+  REAL(KIND=dp) :: dx,UnitVector(3),ElemVector(3),DotPro,Eps,Length,Level,val,q,depth,height,&
+          thickness
+#ifdef USE_ISO_C_BINDINGS
+  REAL(KIND=dp) :: at0,at1,at2
+#else
+  REAL(KIND=dp) :: at0,at1,at2,CPUTime,RealTime
+#endif
+  REAL(KIND=dp), POINTER :: FieldOut(:), FieldIn(:), Levelset(:), Coord(:), TopField(:), ThickIn(:) 
+  TYPE(Variable_t), POINTER :: Var, OldVar, ThickVar
+  TYPE(Element_t), POINTER :: Element
+  TYPE(Nodes_t) :: Nodes
+  TYPE(ValueList_t),POINTER :: BC
 
+  
+  SAVE Visited,Nodes,Initialized,UnitVector,Coord,MaskExist,MaskPerm,TopPointer,BotPointer,&
+      UpPointer,DownPointer,FieldOut,FieldIn,TopNodes,TopPerm, TopField, BotNodes, BotPerm, &
+      nsize, UnitPerm, FirstTime
   IF( .NOT. Initialized ) THEN
 
     IF(Debug) CALL Info('MeanValue','start init')

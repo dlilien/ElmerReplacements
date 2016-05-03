@@ -1,0 +1,28 @@
+#!/bin/sh -f
+
+if test "$ELMER_LIB" = ""; then
+  if  test "$ELMER_HOME" = ""; then
+     LIBDIR=/usr/local/Cellar/elmer/8.0/share/elmersolver/../../lib/elmersolver
+     INCLUDE=/usr/local/Cellar/elmer/8.0/share/elmersolver/include
+  else
+     LIBDIR=$ELMER_HOME/lib/elmersolver
+     INCLUDE=$ELMER_HOME/share/elmersolver/include
+  fi
+else
+  LIBDIR=$ELMER_LIB
+  INCLUDE=$ELMER_LIB/../include
+fi
+
+if test "$ELMER_Fortran_COMPILER" = ""; then
+  FC=/usr/local/bin/gfortran
+else
+  FC=$ELMER_Fortran_COMPILER
+fi
+
+cmd="$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -dynamiclib -Wl,-headerpad_max_install_names -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
+printf "%s " $cmd
+printf "\n"
+$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -Wl,-headerpad_max_install_names -L/usr/local/opt/elmer/lib/elmersolver -I$INCLUDE -L$LIBDIR -lelmersolver
+# $FC   $*
+#$FC   $INCLUDE    $*
+#$FC  $INCLUDE    $* -L$LIBDIR -lelmersolver
