@@ -31,14 +31,16 @@
         Return
         END
 
-        FUNCTION AdjCostNormedTotal( Model, nodenumber, vel) RESULT(cost)
+        FUNCTION AdjCostNormedTotal( Model, nodenumber, vel) &
+            RESULT(cost)
         USE types
         implicit none
         TYPE(Model_t) :: Model
         Real(kind=dp) :: cost
         Real(kind=dp), dimension (1:4) :: vel
         INTEGER :: nodenumber
-        cost=0.5*((vel(1)-vel(2))**2.0_dp + (vel(3)-vel(4))**2.0_dp)/(vel(2)**2.0_dp + vel(4)**2.0_dp)
+        cost=0.5*((vel(1)-vel(2))**2.0_dp + &
+            (vel(3)-vel(4))**2.0_dp)/(vel(2)**2.0_dp + vel(4)**2.0_dp)
         Return
         END
 
@@ -93,7 +95,8 @@
         implicit none
         TYPE(Model_t) :: Model
         Integer :: nodenumber
-        Real(kind=dp) :: T, m, glen, yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
+        Real(kind=dp) :: T, m, glen
+        Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
         m=sqrt(glen(T) * yearinsec ** (-1.0_dp/3.0_dp) * 1.0e-6_dp)
         return
         END
@@ -181,7 +184,9 @@
         Real(kind=dp) :: Lat
         TYPE(Model_t) :: Model
         Integer :: nodenumber
-        Lat = (-3.14159265359_dp/2.0_dp + 2.0_dp * atan(sqrt(coord(1)**2.0_dp+coord(2)**2.0_dp)/(2.0_dp * 6371225.0_dp * 0.97276_dp)))*180.0_dp/3.14159265359_dp
+        Lat = (-3.14159265359_dp/2.0_dp + 2.0_dp * &
+            atan(sqrt(coord(1)**2.0_dp+coord(2)**2.0_dp)/ &
+            (2.0_dp * 6371225.0_dp * 0.97276_dp)))*180.0_dp/3.14159265359_dp
         return
         END
 
@@ -196,7 +201,8 @@
         return
         END
 
-        FUNCTION PressureMeltingPoint( Model, nodenumber, PIN ) Result(PMP)
+        FUNCTION PressureMeltingPoint( Model, nodenumber, PIN ) &
+            Result(PMP)
         Use types
         implicit none
         Real(kind=dp) :: PIN, PMP, P
@@ -272,10 +278,12 @@
         nboundary = GetElementNOFNodes(BoundaryElement)
         Allocate(groundedarr(nboundary))
         DO BoundaryElementNode=1,nboundary
-            IF ( nodenumber == BoundaryElement % NodeIndexes(BoundaryElementNode) ) EXIT
+            IF ( nodenumber == &
+            BoundaryElement % NodeIndexes(BoundaryElementNode) ) EXIT
         END DO
 
-        groundedarr = GetReal( material, 'groundedmask', GotIt, BoundaryElement )
+        groundedarr = GetReal( &
+            material, 'groundedmask', GotIt, BoundaryElement )
         ! We are not actually going to require this to exist, but we
         ! assume that things are grounded if it doesnt
         IF (.NOT. GotIt) THEN
@@ -305,7 +313,8 @@
         return
         END
 
-        FUNCTION BasalMeltFavier_negative( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltFavier_negative( model, nodenumber, z) & 
+            RESULT(melt)
         Use Types
         implicit none
         Real(kind=dp) :: z, melt
@@ -321,7 +330,8 @@
         return
         END
 
-        FUNCTION BasalMeltJoughin_negative( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltJoughin_negative( model, nodenumber, z) &
+            RESULT(melt)
         Use Types
         implicit none
         Real(kind=dp) :: z, melt
@@ -337,7 +347,8 @@
         return
         END
 
-        FUNCTION BasalMeltJoughin_negative_complitcated( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltJoughin_negative_complitcated( &
+            model, nodenumber, z) RESULT(melt)
         Use Types
         Use DefUtils
         implicit none
@@ -372,7 +383,8 @@
         groundedarr = GetReal( material, 'groundedmask',&
              GotIt, ParentElement )
         IF ( .NOT. GotIt) THEN
-        CALL Warn('BasalMeltJoughin', 'We cannot find the grounded mask')
+        CALL Warn('BasalMeltJoughin', &
+                    'We cannot find the grounded mask')
         END IF
         ! We are not actually going to require this to exist, but we
         ! assume that things are grounded if it doesnt
@@ -393,7 +405,8 @@
         return
         END
 
-        FUNCTION BasalMeltZero_negative( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltZero_negative( model, nodenumber, z) &
+            RESULT(melt)
         Use Types
         implicit none
         Real(kind=dp) :: z, melt
