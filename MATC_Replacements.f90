@@ -153,7 +153,7 @@
         implicit none
         Real(kind=dp) :: T
         Real(kind=dp) :: HC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
-        HC=146.3_dp+(7.253_dp * (T + 273.15_dp)) * yearinsec**2.0_dp
+        HC=(146.3_dp+7.253_dp * (T + 273.15_dp)) * yearinsec**2.0_dp
         return
         END
 
