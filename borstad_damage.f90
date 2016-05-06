@@ -87,20 +87,26 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    TYPE(Solver_t):: Solver 
    TYPE(ValueList_t), POINTER :: Material, Constants
    TYPE(Variable_t), POINTER :: StressVariable, FlowVariable, ChiVariable, PSeaDVariable
+   TYPE(Variable_t), POINTER :: StrainRateVariable
    REAL(KIND=dp), POINTER :: StressValues(:), FlowValues(:), ChiValues(:), PSeaDValues(:)
+   REAL(KIND=dp), POINTER :: StrainRateValues(:)
    INTEGER, POINTER :: StressPerm(:), FlowPerm(:), ChiPerm(:), PSeaDPerm(:)
+   INTEGER, POINTER :: StrainRatePerm(:)
 
    INTEGER :: Ind(3,3), DIM, i, j, indice(3), infor
-   REAL (KIND=dp) :: Sig(3,3), SigDev(3,3), EigVect(3,3), EigValues(3),tmp 
-   REAL (KIND=dp) :: SigmaI, SigmaII, Chi, B, sigmath, pwater
-   REAL (KIND=DP) :: EI(3),Dumy(1),Work(24), sigmath_var, stress_threshold
-   REAL (KIND=DP) :: u, v, nbrPi, s
-   LOGICAL :: GotIt, FirstTime = .TRUE., Cauchy, UnFoundFatal
+   REAL (KIND=dp) :: Sig(3,3), SigDev(3,3), tmp 
+   REAL (KIND=dp) :: Eps(3,3)
+   REAL (KIND=dp) :: Chi, B, pwater
+   Real (KIND=dp) :: EffectiveStress, EffectiveStrainRate, Kappa
+   REAL (KIND=DP) :: EI(3),Dumy(1),Work(24)
+   REAL (KIND=DP) :: EpsilonZero, TauZero
+   LOGICAL :: GotIt, FirstTime = .TRUE., Cauchy
    CHARACTER*20 :: USF_Name='SourceDamage'
 
 
-   SAVE :: Ind, DIM, sigmath, B
+   SAVE :: Ind, DIM, B
    SAVE :: FirstTime, Cauchy
+   SAVE :: TauZero, EpsilonZero, Kappa
    
 
    IF (FirstTime) THEN
@@ -128,28 +134,44 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
          CALL INFO('Damage Source', Message, level=2)
       ENDIF
 
-      sigmath = GetConstReal( Material, 'Damage Parameter sigmath', GotIt )
-      IF (.NOT.GotIt) THEN
-      CALL FATAL('Damage Source', 'Damage Parameter Sigmath not Found')
-      ELSE
-         WRITE(Message,'(A,F10.4)') 'Damage Parameter sigmath = ', sigmath 
-         CALL INFO('Damage Source', Message, level=2)
-      ENDIF
-
    ! Cauchy or deviatoric stresses ?
       Cauchy = ListGetLogical( Material , 'Cauchy', Gotit )
       WRITE(Message,'(A,L1)') 'Cauchy stress tensor computed ? ', Cauchy 
          CALL INFO('Damage Source', Message, level=2)
+
+       ! Determination of the stress threshold   
+       Constants => GetConstants()
+       TauZero = GetConstReal( Constants, 'Max Stress', GotIt) 
+        IF (.NOT.GotIt) THEN
+          TauZero = 0.130_dp
+          CALL INFO('USF_Damage','No "Max Stress" given, set &
+          to 0.130', level=2)
+        END IF
+       Kappa = GetConstReal( Constants, 'Borstad Kappa', GotIt) 
+        IF (.NOT.GotIt) THEN
+          Kappa = 2.8_dp
+          CALL INFO('USF_Damage','No "Borstad Kappa" given, set &
+          to 0.130', level=2)
+        END IF
+   ! For now we just use pick a temperature value to calculate varepsilon_0
+   ! Go with T=-10 from C&P, :: 3.5e-25 s^-1 Pa^-3
+   ! So in a^-1 MPa^-3 this is
+   EpsilonZero = 3.5e-25_dp * 1.0e18_dp * 365.25_dp * 24.0_dp * 60.0_dp * 60.0_dp * TauZero**3
    END IF ! FirstTime
 
 
    ! Get the Stress                     
-   StressVariable => VariableGet( Model % Variables, 'Stress',UnFoundFatal=UnFoundFatal)
+   StressVariable => VariableGet( Model % Variables, 'Stress')
    StressPerm    => StressVariable % Perm
    StressValues  => StressVariable % Values
 
+   ! Get the Stress                     
+   StrainRateVariable => VariableGet( Model % Variables, 'StrainRate')
+   StrainRatePerm    => StrainRateVariable % Perm
+   StrainRateValues  => StrainRateVariable % Values
+
    ! Get Chi variable (positive where damage increases)
-   ChiVariable => VariableGet( Model % Variables, 'Chi',UnFoundFatal=UnFoundFatal)
+   ChiVariable => VariableGet( Model % Variables, 'Chi')
    ChiPerm    => ChiVariable % Perm
    ChiValues  => ChiVariable % Values
    
@@ -164,7 +186,7 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    END IF
 
    ! Get the variables to compute the hydrostatic pressure  
-   FlowVariable => VariableGet( Model % Variables, 'Flow Solution',UnFoundFatal=UnFoundFatal)
+   FlowVariable => VariableGet( Model % Variables, 'Flow Solution')
    FlowPerm    => FlowVariable % Perm
    FlowValues  => FlowVariable % Values
 
@@ -192,61 +214,31 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
        END DO
    END IF
 
+   Eps = 0.0
+   DO i=1, DIM
+      DO j= 1, DIM
+         Eps(i,j) =  &
+              StrainRateValues( 2*DIM *(StrainRatePerm(Nodenumber)-1) + Ind(i,j) )
+      END DO
+   END DO
+   IF (DIM==2) Eps(3,3) = StrainRateValues( 2*DIM *(StrainRatePerm(Nodenumber)-1) + Ind(3,3))
 
-   ! Compute the principal stresses:
-
-   ! Get the principal stresses
-   CALL DGEEV('N','N',3,Sig,3,EigValues,EI,Dumy,1,Dumy,1,Work,24,infor )
-   IF (infor.ne.0) &
-   CALL FATAL('Compute EigenValues', 'Failed to compute EigenValues') 
-
-   ! Get the eigenvectors (if necessary)
-   CALL DGEEV('N','V',3,Sig,3,EigValues,EI,Dumy,1,EigVect,3,Work,24,infor ) 
-   IF (infor.ne.0) &
-   CALL FATAL('Compute EigenVectors', 'Failed to compute EigenVectors') 
-   
-   indice = (/(i,i=1,3)/)
-   CALL sortd(3,EigValues,indice)
- 
-   SigmaI = EigValues(3)
-   SigmaII = EigValues(2) 
-
-   !SigmaI = MAXVAL(EigValues)
-   !write(*,*)'SigI',SigmaI,EigValues
-   nbrPi = 3.141592_dp
-
-   u = EvenRandom()
-   v = EvenRandom()
-
-   ! Determination of the stress threshold   
-      Constants => GetConstants()
-   s = GetConstReal( Constants, 'Dev Tensile Strength Modifier', GotIt) 
-    IF (.NOT.GotIt) THEN
-      CALL FATAL('USF_Damage','No "Dev tensile strength modifier" given, set &
-      to 0.05')
-    END IF
+   EffectiveStress = SQRT(0.5_dp * (Sig(1,1)**2.0_dp + Sig(2,2)**2.0_dp + Sig(3,3)**2.0_dp + &
+       Sig(3,1)**2.0_dp + Sig(2,1)**2.0_dp + Sig(3,2)**2.0_dp))
   
-   ! Get a normal distribution of mean 0 and std dev "s" using two random numbers
-   ! "u" and "v" 
-   sigmath_var = ABS(0+s*SQRT(-2.0_dp*LOG((1.0_dp-u)))*COS(2.0_dp*nbrPi*v))
-
-   stress_threshold = sigmath*(1+sigmath_var)
-  
-   ! Get the Sea pressure at the node
+   EffectiveStrainRate = SQRT(0.5_dp * (Eps(1,1)**2.0_dp + Eps(2,2)**2.0_dp + Eps(3,3)**2.0_dp + &
+       Eps(3,1)**2.0_dp + Eps(2,1)**2.0_dp + Eps(3,2)**2.0_dp))
    
-   IF ( ASSOCIATED( PSeaDVariable ) ) THEN
-   pwater = PseaDValues ( PSeaDPerm (nodenumber) )
+   IF (EffectiveStress<TauZero) THEN
+       Chi = 0.0_dp
    ELSE
-   pwater = 0.0_dp
+       Chi = 1.0_dp - (EffectiveStrainRate / EpsilonZero)**(-1.0_dp/3.0_dp) * &
+               EXP(-(EffectiveStrainRate - EpsilonZero) / (EpsilonZero * &
+               (kappa - 1.0_dp)))
    END IF
 
-   ! Damage Criterion
-   Chi = 1.0_dp / (1.0_dp - D) * (SigmaI + pwater) - stress_threshold
-
-   ! Save Chi in ChiVariable
    ChiValues(ChiPerm(nodenumber)) = Chi
  
-   ! Advection-Reaction Source term :
-   Source = B * MAX(Chi,0.0_dp)
+   Source = Chi
 
 END FUNCTION SourceDamage   
