@@ -5,7 +5,7 @@
 #
 
 FC=elmerf90
-LIB_SOURCES=DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 LIB=lilien_lib.so
 
