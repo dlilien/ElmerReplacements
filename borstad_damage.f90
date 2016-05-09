@@ -1,24 +1,3 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! USF_Damage.f90
-! Last modif : 12 December 2014
-! Computes the evolution of damage and computes the Enhancement factor of the Glen's law
-! as a function of damage evolution 
-!
-!
-! (1) Enhancement Factor 
-! Need some inputs in the sif file.
-! Parameters: 
-! Glen Exponent
-!             
-!
-! (2) SourceDamage
-! Need some inputs in the sif file.
-! Parameters: 
-! Damage Enhancement Factor
-! Damage Parameter sigmath
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! EnhancementFactor
@@ -100,6 +79,24 @@ FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
   ! write(*,*) D
   ! write(*,*)'E', E
 END FUNCTION EnhancedEta
+
+
+FUNCTION SquareInput ( Model, nodenumber, Input) RESULT(Output)
+   USE types
+   USE CoordinateSystems
+   USE SolverUtils
+   USE ElementDescription
+   USE DefUtils
+   IMPLICIT NONE
+   TYPE(Model_t) :: Model
+   TYPE(Solver_t), TARGET :: Solver
+   REAL(KIND=dp) :: Input, Output  
+   INTEGER :: nodenumber
+
+   Output = Input**2.0_dp
+END FUNCTION SquareInput
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! SourceDamage 
