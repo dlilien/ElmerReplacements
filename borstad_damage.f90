@@ -137,12 +137,10 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    LOGICAL :: GotIt, FirstTime = .TRUE., Cauchy
    CHARACTER*20 :: USF_Name='SourceDamage'
 
-
    SAVE :: Ind, DIM
    SAVE :: FirstTime, Cauchy
    SAVE :: TauZero, EpsilonZero, Kappa
    
-
    IF (FirstTime) THEN
       FirstTime = .FALSE.  
       DIM = CoordinateSystemDimension()
@@ -185,7 +183,6 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    EpsilonZero = 3.5e-25_dp * 1.0e18_dp * 365.25_dp * 24.0_dp * 60.0_dp * 60.0_dp * TauZero**3
    Call Info('Damage Soure', 'First time completed', level=7)
    END IF ! FirstTime
-
 
    ! Get the Stress                     
    StressVariable => VariableGet( Model % Variables, 'Stress')
@@ -254,8 +251,8 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    IF (EffectiveStress < TauZero) THEN
        CurrentDamage = 0.0_dp
    ELSE
-       WRITE(Message,'(A,F10.4)') 'Effective Stress Value is ', EffectiveStress
-       Call Info('Damage Source', Message, level=3)
+       ! WRITE(Message,'(A,F10.4)') 'Effective Stress Value is ', EffectiveStress
+       ! Call Info('Damage Source', Message, level=3)
        CurrentDamage = 1.0_dp - (EffectiveStrainRate / EpsilonZero)**(-1.0_dp/3.0_dp) * &
                EXP(-(EffectiveStrainRate - EpsilonZero) / (EpsilonZero * &
                (kappa - 1.0_dp)))
