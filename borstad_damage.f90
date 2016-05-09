@@ -120,17 +120,17 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
  
    TYPE(Solver_t):: Solver 
    TYPE(ValueList_t), POINTER :: Material, Constants
-   TYPE(Variable_t), POINTER :: StressVariable, FlowVariable, ChiVariable, PSeaDVariable
+   TYPE(Variable_t), POINTER :: StressVariable, FlowVariable, CurrentDamageVariable, PSeaDVariable
    TYPE(Variable_t), POINTER :: StrainRateVariable
-   REAL(KIND=dp), POINTER :: StressValues(:), FlowValues(:), ChiValues(:), PSeaDValues(:)
+   REAL(KIND=dp), POINTER :: StressValues(:), FlowValues(:), CurrentDamageValues(:), PSeaDValues(:)
    REAL(KIND=dp), POINTER :: StrainRateValues(:)
-   INTEGER, POINTER :: StressPerm(:), FlowPerm(:), ChiPerm(:), PSeaDPerm(:)
+   INTEGER, POINTER :: StressPerm(:), FlowPerm(:), CurrentDamagePerm(:), PSeaDPerm(:)
    INTEGER, POINTER :: StrainRatePerm(:)
 
    INTEGER :: Ind(3,3), DIM, i, j, indice(3), infor
    REAL (KIND=dp) :: Sig(3,3), SigDev(3,3), tmp 
    REAL (KIND=dp) :: Eps(3,3)
-   REAL (KIND=dp) :: Chi 
+   REAL (KIND=dp) :: CurrentDamage 
    Real (KIND=dp) :: EffectiveStress, EffectiveStrainRate, Kappa
    REAL (KIND=DP) :: EI(3),Dumy(1),Work(24)
    REAL (KIND=DP) :: EpsilonZero, TauZero
@@ -197,17 +197,17 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    StrainRatePerm    => StrainRateVariable % Perm
    StrainRateValues  => StrainRateVariable % Values
 
-   ! Get Chi variable (positive where damage increases)
-   ChiVariable => VariableGet( Model % Variables, 'Chi')
-   ChiPerm    => ChiVariable % Perm
-   ChiValues  => ChiVariable % Values
+   ! Get CurrentDamage variable (positive where damage increases)
+   CurrentDamageVariable => VariableGet( Model % Variables, 'Current Damage')
+   CurrentDamagePerm    => CurrentDamageVariable % Perm
+   CurrentDamageValues  => CurrentDamageVariable % Values
    
    ! Get the variables to compute the hydrostatic pressure  
    FlowVariable => VariableGet( Model % Variables, 'Flow Solution')
    FlowPerm    => FlowVariable % Perm
    FlowValues  => FlowVariable % Values
 
-   CALL Info('Damage Source', 'Stress, Strain, Chi, and Flow Found', level=7)
+   CALL Info('Damage Source', 'Stress, Strain, CurrentDamage, and Flow Found', level=7)
 
    Sig = 0.0
    DO i=1, DIM
@@ -251,21 +251,28 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
 
    CALL Info('Damage Source', 'Effective Stress and Strain Computed', level=8)
    
-   IF (EffectiveStress<TauZero) THEN
-       Chi = 0.0_dp
+   IF (EffectiveStress < TauZero) THEN
+       CurrentDamage = 0.0_dp
    ELSE
-       Chi = 1.0_dp - (EffectiveStrainRate / EpsilonZero)**(-1.0_dp/3.0_dp) * &
+       WRITE(Message,'(A,F10.4)') 'Effective Stress Value is ', EffectiveStress
+       Call Info('Damage Source', Message, level=3)
+       CurrentDamage = 1.0_dp - (EffectiveStrainRate / EpsilonZero)**(-1.0_dp/3.0_dp) * &
                EXP(-(EffectiveStrainRate - EpsilonZero) / (EpsilonZero * &
                (kappa - 1.0_dp)))
    END IF
 
-   ChiValues(ChiPerm(nodenumber)) = Chi
+   CurrentDamage = MAX(CurrentDamage, 0.0_dp)
+   CurrentDamageValues(CurrentDamagePerm(nodenumber)) = CurrentDamage
 
-   Call Info('Damage Source', 'Chi Computed', level=9)
+   ! CurrentDamage is the value of damage computed at this step. The total damage is
+   ! separate. We need to compute the source so that
+   ! Damage = MAX(Damage_current, Damage_old)
 
-   IF (D > chi) THEN
+   Call Info('Damage Source', 'CurrentDamage Computed', level=9)
+
+   IF (D > CurrentDamage) THEN
        source = 0.0_dp
    ELSE
-       source = D - chi
+       source = CurrentDamage - D
    END IF
 END FUNCTION SourceDamage   
