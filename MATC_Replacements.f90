@@ -160,6 +160,10 @@
         FUNCTION ThermalConductivity(T) Result(TC)
         Use types
         implicit none
+        ! I have played around with this function to see if the values
+        ! here screw up the peclet number; there is weird behavior with
+        ! low conductivity, some kind of numerical ringing i think, but
+        ! everything looks good in the conductive limit
         Real(kind=dp) :: T
         Real(kind=dp) :: TC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
         TC=9.828_dp * exp(-5.7e-3_dp * (T + 273.15_dp)) * yearinsec * 1.0e-6_dp
