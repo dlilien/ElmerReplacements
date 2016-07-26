@@ -8,6 +8,8 @@ FC=elmerf90
 LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 LIB=lilien_lib.so
+SRC=./src/AdjointSSA/src
+include ./src/AdjointSSA/Makefile
 
 FORT_SOURCES=MshGlacierDEM.f90
 FORT_OBJECTS=$(FORT_SOURCES:.f90=)
@@ -15,7 +17,7 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: $(LIB_OBJECTS) $(LIB)
+all: $(LIB_OBJECTS) $(LIB) AdjointSSASolvers
 
 $(LIB): $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) -o $@
