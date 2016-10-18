@@ -82,10 +82,10 @@
         implicit none
         TYPE(Model_t) :: Model
         Real(kind=dp) :: T
-        Real(kind=dp) :: g, ArrheniusFactor
+        Real(kind=dp) :: g, ArrheniusFactorCelcius
         Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
         INTEGER :: nodenumber
-        g=(2.0_dp*ArrheniusFactor(T))**(-1.0_dp/3.0_dp)
+        g=(2.0_dp*ArrheniusFactorCelcius(T + 273.15_dp))**(-1.0_dp/3.0_dp)
         Return
         END
 
@@ -123,12 +123,12 @@
         Real(kind=dp) :: T
         Real(kind=dp) :: AF
         Real(kind=dp) :: UGC=8.314_dp, TT=273.15_dp
-        IF (T<TT-10.0_dp) THEN
-                AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * (T)))
-        ELSE IF (T>TT) THEN
+        IF (T<263.15_dp) THEN
+                AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * T))
+        ELSE IF (T>TT .OR. T<0.0_dp) THEN
                 AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
         ELSE
-                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *(T)))
+                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *T))
         END IF
         return
         END
