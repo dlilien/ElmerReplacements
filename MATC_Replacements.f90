@@ -85,7 +85,7 @@
         Real(kind=dp) :: g, ArrheniusFactorCelcius
         Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
         INTEGER :: nodenumber
-        g=(2.0_dp*ArrheniusFactorCelcius(T + 273.15_dp))**(-1.0_dp/3.0_dp)
+        g=(2.0_dp*ArrheniusFactorCelcius(T - 273.15_dp))**(-1.0_dp/3.0_dp)
         Return
         END
 
@@ -114,6 +114,9 @@
         ELSE
                 AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *(TT + T)))
         END IF
+        IF (AF < 1.0e-32) THEN
+            AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        END IF
         return
         END
 
@@ -130,7 +133,9 @@
         ELSE
                 AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *T))
         END IF
-        return
+        IF (AF < 1.0e-32) THEN
+            AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        END IF
         END
 
         FUNCTION HeatCapacityCelcius(T) Result(HC)
