@@ -44,7 +44,7 @@ REAL(KIND=dp), ALLOCATABLE :: xb(:), yb(:), zb(:), xs(:), &
                        ys(:), zs(:)
 REAL(KIND=dp), ALLOCATABLE  :: xnode(:), ynode(:), znode(:)                       
 INTEGER, ALLOCATABLE :: Node(:)
-CHARACTER :: NameMsh*30, Rien*1, NameSurf*30, NameBed*30
+CHARACTER :: NameMsh*80, Rien*1, NameSurf*80, NameBed*80
 Character(len=10) :: iNp, iNN
 REAL(KIND=dp)  :: dsx, dsy, dbx, dby, x1, x2, y1, y2, zi(2,2)
 REAL(KIND=dp)  :: xs0, ys0, xb0, yb0, zbed, zsurf, znew, Rmin, R
