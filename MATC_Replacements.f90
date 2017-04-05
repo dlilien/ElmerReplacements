@@ -39,7 +39,7 @@
         return
         END
 
-        FUNCTION Visc( Model, nodenumber, T ) Result(m)
+        FUNCTION ViscCelcius( Model, nodenumber, T ) Result(m)
         USE types
         implicit none
         TYPE(Model_t) :: Model
@@ -58,19 +58,50 @@
         return
         END
 
+        FUNCTION Visc( Model, nodenumber, T ) Result(m)
+        USE types
+        implicit none
+        TYPE(Model_t) :: Model
+        Integer :: nodenumber
+        Real(kind=dp) :: T, m, yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
+        Real(kind=dp) :: AF
+        Real(kind=dp) :: UGC=8.314_dp, TT=273.15_dp
+        IF (T<263.15_dp) THEN
+                AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * (T)))
+        ELSE IF (T>TT) THEN
+                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        ELSE
+                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *(T)))
+        END IF
+        m=(2.0_dp * AF * yearinsec)** (-1.0_dp/3.0_dp) * 1.0e-6_dp
+        return
+        END
+
         FUNCTION glen( Model, nodenumber, T ) Result(g)
         USE types
         implicit none
         TYPE(Model_t) :: Model
         Real(kind=dp) :: T
-        Real(kind=dp) :: g, ArrheniusFactor
+        Real(kind=dp) :: g, ArrheniusFactorCelcius
         Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
         INTEGER :: nodenumber
-        g=(2.0_dp*ArrheniusFactor(T))**(-1.0_dp/3.0_dp)
+        g=(2.0_dp*ArrheniusFactorCelcius(T - 273.15_dp))**(-1.0_dp/3.0_dp)
         Return
         END
 
-        FUNCTION ArrheniusFactor(T) Result(AF)
+        FUNCTION glenCelcius( Model, nodenumber, T ) Result(g)
+        USE types
+        implicit none
+        TYPE(Model_t) :: Model
+        Real(kind=dp) :: T
+        Real(kind=dp) :: g, ArrheniusFactorCelcius
+        Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
+        INTEGER :: nodenumber
+        g=(2.0_dp*ArrheniusFactorCelcius(T))**(-1.0_dp/3.0_dp)
+        Return
+        END
+
+        FUNCTION ArrheniusFactorCelcius(T) Result(AF)
         USE types
         implicit none
         Real(kind=dp) :: T
@@ -83,6 +114,36 @@
         ELSE
                 AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *(TT + T)))
         END IF
+        IF (AF < 1.0e-32) THEN
+            AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        END IF
+        return
+        END
+
+        FUNCTION ArrheniusFactor(T) Result(AF)
+        USE types
+        implicit none
+        Real(kind=dp) :: T
+        Real(kind=dp) :: AF
+        Real(kind=dp) :: UGC=8.314_dp, TT=273.15_dp
+        IF (T<263.15_dp) THEN
+                AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * T))
+        ELSE IF (T>TT .OR. T<0.0_dp) THEN
+                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        ELSE
+                AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC *T))
+        END IF
+        IF (AF < 1.0e-32) THEN
+            AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
+        END IF
+        END
+
+        FUNCTION HeatCapacityCelcius(T) Result(HC)
+        Use types
+        implicit none
+        Real(kind=dp) :: T
+        Real(kind=dp) :: HC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
+        HC=(146.3_dp+7.253_dp * (T + 273.15_dp)) * yearinsec**2.0_dp
         return
         END
 
@@ -91,7 +152,20 @@
         implicit none
         Real(kind=dp) :: T
         Real(kind=dp) :: HC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
-        HC=(146.3_dp+7.253_dp * (T + 273.15_dp)) * yearinsec**2.0_dp
+        HC=(146.3_dp+7.253_dp * (T)) * yearinsec**2.0_dp
+        return
+        END
+
+        FUNCTION ThermalConductivityCelcius(T) Result(TC)
+        Use types
+        implicit none
+        ! I have played around with this function to see if the values
+        ! here screw up the peclet number; there is weird behavior with
+        ! low conductivity, some kind of numerical ringing i think, but
+        ! everything looks good in the conductive limit
+        Real(kind=dp) :: T
+        Real(kind=dp) :: TC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
+        TC=9.828_dp * exp(-5.7e-3_dp * (T + 273.15_dp)) * yearinsec * 1.0e-6_dp
         return
         END
 
@@ -104,7 +178,7 @@
         ! everything looks good in the conductive limit
         Real(kind=dp) :: T
         Real(kind=dp) :: TC, yearinsec=365.25_dp*24.0_dp*60_dp*60_dp
-        TC=9.828_dp * exp(-5.7e-3_dp * (T + 273.15_dp)) * yearinsec * 1.0e-6_dp
+        TC=9.828_dp * exp(-5.7e-3_dp * (T)) * yearinsec * 1.0e-6_dp
         return
         END
 
@@ -132,7 +206,7 @@
         return
         END
 
-        FUNCTION SurfaceTemp( Model, nodenumber, LatX ) Result(T)
+        FUNCTION SurfaceTempCelcius( Model, nodenumber, LatX ) Result(T)
         Use types
         implicit none
         Real(kind=dp), dimension(1:2) :: LatX
@@ -143,7 +217,7 @@
         return
         END
 
-        FUNCTION PressureMeltingPoint( Model, nodenumber, PIN ) &
+        FUNCTION PressureMeltingPointCelcius( Model, nodenumber, PIN ) &
             Result(PMP)
         Use types
         implicit none
@@ -159,12 +233,28 @@
         return
         END
 
+        FUNCTION PressureMeltingPoint( Model, nodenumber, PIN ) &
+            Result(PMP)
+        Use types
+        implicit none
+        Real(kind=dp) :: PIN, PMP, P
+        TYPE(Model_t) :: Model
+        Integer :: nodenumber
+        IF (PIN<0.0_dp) THEN
+                P=0.0_dp
+        ELSE
+                P=PIN
+        END IF
+        PMP=273.15_dp-(9.8e-2_dp*P)
+        return
+        END
+
         FUNCTION FluxUnits( Model, nodenumber, fin ) RESULT(fout)
         Use Types
         implicit none
         Real(kind=dp) :: fin, fout
         TYPE(Model_t) :: Model
         Integer :: nodenumber
-        fout=fin*365.25_dp*24.0_dp*60.0_dp*60.0_dp/1.0e6_dp
+        fout=fin * 365.25_dp * 24.0_dp* 60.0_dp * 60.0_dp * 1.0e-6_dp
         return
         END
