@@ -318,7 +318,9 @@ SUBROUTINE Grid2DInterpolator( Model,Solver,dt,TransientSimulation )
          y = Model % Mesh % Nodes % y(i)
          Rmin = 0.0
          CALL InterpolateDEM(x,y,xb,yb,zb,Nx,Ny,x0,y0,lx,ly,Rmin,z,noDataVal,noDataTol)
-         Values(Perm(i)) = z
+         IF (Perm(i) > 0) THEN
+            Values(Perm(i)) = z
+         END IF
          IF (Rmin > 0.0) THEN
             OutNode = OutNode + 1
             IF (Rmin > Rmax) Rmax = Rmin
