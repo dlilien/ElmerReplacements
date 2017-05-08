@@ -109,6 +109,9 @@
         Real(kind=dp) :: UGC=8.314_dp, TT=273.15_dp
         IF (T<-10.0_dp) THEN
                 AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * (TT + T)))
+           IF (T<-60.0_dp) THEN
+                AF = 3.985e-13_dp * exp( -60.0e3_dp/(UGC * (TT - 60.0_dp)))
+           END IF
         ELSE IF (T>0.0_dp) THEN
                 AF = 1.916e03_dp * exp(-139.0e3_dp/(UGC * TT))
         ELSE
