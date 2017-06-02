@@ -41,22 +41,25 @@
          subroutine get_twod_grid(fn, x, y, z)
              implicit None
              character (len=128):: fn
-             integer nx, ny, r, i, j
+             integer r, i, j
+             integer*4 nx, ny
              real, dimension(:), allocatable :: x, y
              real, dimension(:, :), allocatable :: z
              open(10, access='DIRECT', recl=4, file=fn)
              read(10, rec=1) ny
-             read(10, rec=3) nx
+             read(10, rec=2) nx
              allocate (z(nx, ny), x(nx), y(ny))
-             r = 4
+             r = 3
             do i=1,nx
                 read(10, rec=r) x(i)
                 r = r + 1
             end do
+            write(*,*) 'x read'
             do i=1,ny
-                read(10, rec=6 + nx + i) y(i)
+                read(10, rec=r) y(i)
                 r = r + 1
             end do
+            write(*,*) 'x and y read'
             do i=1,nx
                 do j=1,ny
                     read(10, rec=r) z(i, j)
@@ -66,6 +69,18 @@
          return
          end subroutine get_twod_grid
 
+         subroutine get_twod_header(fn, x, y, z)
+             implicit None
+             character (len=128):: fn
+             integer r, i, j
+             integer*4 nx, ny
+             real, dimension(:), allocatable :: x, y
+             real, dimension(:, :), allocatable :: z
+             open(10, access='DIRECT', recl=4, file=fn)
+             read(10, rec=1) ny
+             read(10, rec=2) nx
+          return
+         end subroutine get_twod_header
        end module read_routines
 
 
