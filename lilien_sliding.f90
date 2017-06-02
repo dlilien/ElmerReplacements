@@ -519,10 +519,10 @@ FUNCTION Sliding_lilien (Model, nodenumber, x) RESULT(Bdrag)
   
   ut = MAX(ut,ut0)
   Bdrag = MIN(C * ut**(m-1.0),1.0e20)
-END FUNCTION Sliding_Weertman
+END FUNCTION Sliding_Lilien
 
 
-FUNCTION Sliding_lilien (Model, nodenumber, x) RESULT(Bdrag)
+FUNCTION Sliding_Weertman (Model, nodenumber, x) RESULT(Bdrag)
 
   USE types
   USE CoordinateSystems
