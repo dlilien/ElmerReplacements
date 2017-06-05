@@ -48,7 +48,7 @@
              open(10, access='DIRECT', recl=4, file=fn)
              read(10, rec=1) nx
              read(10, rec=2) ny
-             allocate (z(nx, ny), x(nx), y(ny))
+             allocate (z(ny, nx), x(nx), y(ny))
              r = 3
             do i=1,nx
                 read(10, rec=r) x(i)
@@ -58,8 +58,8 @@
                 read(10, rec=r) y(i)
                 r = r + 1
             end do
-            do i=1,nx
-                do j=1,ny
+            do i=1,ny
+                do j=1,nx
                     read(10, rec=r) z(i, j)
                     r = r + 1
                 end do
