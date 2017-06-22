@@ -77,7 +77,7 @@
         return
         END
 
-        FUNCTION glen( Model, nodenumber, T ) Result(g)
+        FUNCTION glen( T ) Result(g)
         USE types
         implicit none
         TYPE(Model_t) :: Model
