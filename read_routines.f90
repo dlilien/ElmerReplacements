@@ -17,19 +17,19 @@
             read(10, rec=1) ny
             read(10, rec=3) nx
             read(10, rec=5) nz
-            r = 6
+            r = 7
             allocate (z(nx, ny, nz), x(nx), y(ny))
             do i=1,nx
                 read(10, rec=r) x(i)
                 r = r + 1
             end do
             do i=1,ny
-                read(10, rec=6 + nx + i) y(i)
+                read(10, rec=r) y(i)
                 r = r + 1
             end do
             do k=1,nz
-                do i=1,nx
-                    do j=1,ny
+                do j=1,ny
+                    do i=1,nx
                         read(10, rec=r) z(i, j, k)
                         r = r + 1
                     end do
