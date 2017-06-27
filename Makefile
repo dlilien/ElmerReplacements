@@ -7,7 +7,7 @@
 FCB=ifort -fPIC
 FC=elmerf90
 CC=icc
-LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90 MeltFunctions.f90 Cost_Functions.f90 AdjointSSA_CostDiscSolver.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90 MeltFunctions.f90 Cost_Functions.f90
 MODULE_SOURCES=read_routines.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
@@ -27,7 +27,8 @@ $(LIB): $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) -o $@
 
 $(MODULE): %.o: %.f90
-	$(FC) -assume byterecl -c $< -o $@
+	$(FC) -c $< -o $@
+	#$(FC) -assume byterecl -c $< -o $@
 
 $(LIB_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@

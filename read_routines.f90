@@ -20,22 +20,18 @@
                   read(10, rec=r) x(i)
                   r = r+1
               end do
-              write(*,*) x(1), x(np)
               do i=1,np
                   read(10, rec=r) y(i)
                   r = r+1
               end do
-              write(*,*) y(1), y(np)
               do i=1,np
                   read(10, rec=r) z(i)
                   r = r+1
               end do
-              write(*,*) z(1), z(np)
               do i=1,np
                   read(10, rec=r) dat(i)
                   r = r+1
               end do
-              write(*,*) dat(1), dat(np)
           end
 
           subroutine get_threed_grid(fn, x, y, z)
