@@ -454,7 +454,6 @@ FUNCTION Sliding_lilien (Model, nodenumber, x) RESULT(Bdrag)
      CASE ('ssabasalflow') 
         SSA = .TRUE.
      END SELECT
-     write(*,*)FlowSolverName, SSA
   END IF
   
   !Read the coefficients C and m in the sif file
@@ -566,7 +565,6 @@ FUNCTION Sliding_Weertman (Model, nodenumber, x) RESULT(Bdrag)
      CASE ('ssabasalflow') 
         SSA = .TRUE.
      END SELECT
-     write(*,*)FlowSolverName, SSA
   END IF
   
   !Read the coefficients C and m in the sif file

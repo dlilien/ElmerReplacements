@@ -14,7 +14,11 @@ else
 fi
 
 if test "$ELMER_Fortran_COMPILER" = ""; then
-  FC=/usr/local/bin/gfortran
+    if [ -f /usr/local/bin/gfortran]; then
+        FC=/usr/local/bin/gfortran
+    else
+        FC=/usr/bin/gfortran
+    fi 
 else
   FC=$ELMER_Fortran_COMPILER
 fi

@@ -71,6 +71,14 @@ FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
   ! write(*,*)'E', E
 END FUNCTION EnhancedEta
 
+FUNCTION EtaEtaInit ( Model, nodenumber, D) RESULT(Visc)
+   USE types
+   IMPLICIT NONE
+   TYPE(Model_t) :: Model
+   REAL(KIND=dp) :: D(2), Visc  
+   INTEGER :: nodenumber
+   Visc = D(1)**2.0_dp * D(2)**2.0_dp 
+END FUNCTION EtaEtaInit
 
 FUNCTION SquareInput ( Model, nodenumber, Input) RESULT(Output)
    USE types
