@@ -3,6 +3,54 @@
 ! EnhancementFactor
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Module Visc2damage
+    contains
+        SUBROUTINE DamageOrVisc(fn, xx, yy, dem, dorv)
+        USE read_routines
+        implicit none
+        Logical :: dorv
+        REAL, dimension(:), pointer :: xx, yy
+        REAL, dimension(:, :), pointer :: dem
+        REAL, dimension(:), allocatable, target :: x, y
+        REAL, dimension(:,:), allocatable, target :: damage, visc
+        INTEGER :: nx, ny, i, j
+        LOGICAL :: firsttime=.TRUE.
+        CHARACTER (len=128), INTENT(IN):: fn
+
+        SAVE x, y, damage, visc, firsttime, nx, ny
+
+        if (firsttime) then
+            firsttime=.FALSE.
+
+            CALL get_twod_grid(fn, x, y, visc)
+            nx = SIZE(x)
+            ny = SIZE(y)
+            allocate (damage(nx, ny))
+
+            do i=1,nx
+                  do j=1,ny
+                      ! Calculate from Borstad equation 1
+                      ! This is really easy because of how I defined the
+                      ! viscosity
+                      if (visc(i, j) ** 2. .LT. 1.0) then
+                        damage(i, j) = 1.0 - visc(i, j) ** 2.
+                        visc(i, j) = 1.0
+                      else
+                        damage(i, j) = 0.0
+                      end if
+                  end do
+            end do
+        end if
+
+        xx => x
+        yy => y
+        if (dorv) then
+            dem => damage
+        else
+            dem => visc
+        end if
+    END SUBROUTINE DamageOrVisc        
+end module
 
 FUNCTION EnhancementFactor ( Model, nodenumber, D) RESULT(E)
    USE types
@@ -36,6 +84,38 @@ FUNCTION EnhancementFactor ( Model, nodenumber, D) RESULT(E)
    E = (1.0 - D)**(-n) 
 END FUNCTION EnhancementFactor
 
+FUNCTION EnhancedDamagedEta ( Model, nodenumber, D) RESULT(Visc)
+   USE types
+   USE DefUtils
+   IMPLICIT NONE
+   TYPE(Model_t) :: Model
+   TYPE(ValueList_t), POINTER :: Material
+   TYPE(Solver_t), TARGET :: Solver
+   REAL(KIND=dp) :: D(3), Visc, n  
+   INTEGER :: nodenumber
+   LOGICAL :: FirstTime=.TRUE., GotIt
+
+   SAVE FirstTime, n 
+
+   IF (FirstTime) THEN
+   FirstTime = .False.
+    
+      Material => GetMaterial()
+      n = GetConstReal( Material, 'Glen Exponent', GotIt )
+      IF (.NOT.GotIt) THEN
+         WRITE(Message,'(A)') 'Variable Glen Exponent not found. &
+              &Setting to 3.0'
+         CALL INFO('Damage EnhancementFactor', Message, level=2)
+         n = 3.0_dp
+      ELSE
+         WRITE(Message,'(A,F10.4)') 'n = ', n 
+         CALL INFO('Damage EnhancementFactor', Message, level=2)
+      END IF
+   END IF
+
+    Visc = D(1)**2.0_dp * D(2) ** 2.0_dp * (1.0_dp - D(3))**(-n) 
+END FUNCTION EnhancedDamagedEta
+
 FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
    USE types
    USE DefUtils
@@ -66,9 +146,6 @@ FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
    END IF
 
        Visc = D(1)**2.0_dp * (1.0_dp - D(2))**(-n) 
-    
-  ! write(*,*) D
-  ! write(*,*)'E', E
 END FUNCTION EnhancedEta
 
 FUNCTION EtaEtaInit ( Model, nodenumber, D) RESULT(Visc)

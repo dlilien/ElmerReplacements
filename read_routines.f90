@@ -35,9 +35,9 @@
           end
 
           subroutine get_threed_grid(fn, x, y, z)
-              implicit None
-              character (len=128):: fn
-              integer nx, ny, nz, r, i, j, k
+            implicit None
+            character (len=128):: fn
+            integer nx, ny, nz, r, i, j, k
             real, dimension(:), allocatable :: x, y
             real, dimension(:, :, :), allocatable :: z
             open(10, access='DIRECT', recl=4, file=fn)
@@ -106,6 +106,34 @@
              read(10, rec=2) nx
           return
          end subroutine get_twod_header
+
+      SUBROUTINE write_twod_grid(fn, x, y, z, nx, ny)
+          implicit none
+          integer*4 :: nx, ny
+          integer :: i, j, r
+          real :: x(nx), y(ny), z(nx, ny)
+          character(len=128) :: fn
+
+          open(10, access='DIRECT', recl=4, file=fn)
+          write(10, rec=1) nx
+          write(10, rec=2) ny
+             r = 3
+            do i=1,nx
+                write(10, rec=r) x(i)
+                r = r + 1
+            end do
+            do i=1,ny
+                write(10, rec=r) y(i)
+                r = r + 1
+            end do
+            do j=1,ny
+                do i=1,nx
+                    write(10, rec=r) z(i, j)
+                    r = r + 1
+                end do
+            end do
+         return
+      END SUBROUTINE write_twod_grid
 
         Function LinearInterp(dem,xx,yy,nx,ny,x,y) Result(InterP1)
         USE TYPES
