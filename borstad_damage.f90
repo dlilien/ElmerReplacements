@@ -3,12 +3,57 @@
 ! EnhancementFactor
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Module Visc2damage
+    contains
+        SUBROUTINE DamageOrVisc(fn, xx, yy, dem, dorv)
+        USE read_routines
+        implicit none
+        Logical :: dorv
+        REAL, dimension(:), pointer :: xx, yy
+        REAL, dimension(:, :), pointer :: dem
+        REAL, dimension(:), allocatable, target :: x, y
+        REAL, dimension(:,:), allocatable, target :: damage, visc
+        INTEGER :: nx, ny, i, j
+        LOGICAL :: firsttime=.TRUE.
+        CHARACTER (len=128), INTENT(IN):: fn
+
+        SAVE x, y, damage, visc, firsttime, nx, ny
+
+        if (firsttime) then
+            firsttime=.FALSE.
+
+            CALL get_twod_grid(fn, x, y, visc)
+            nx = SIZE(x)
+            ny = SIZE(y)
+            allocate (damage(nx, ny))
+
+            do i=1,nx
+                  do j=1,ny
+                      ! Calculate from Borstad equation 1
+                      ! This is really easy because of how I defined the
+                      ! viscosity
+                      if (visc(i, j) ** 2. .LT. 1.0) then
+                        damage(i, j) = 1.0 - visc(i, j) ** 2.
+                        visc(i, j) = 1.0
+                      else
+                        damage(i, j) = 0.0
+                      end if
+                  end do
+            end do
+        end if
+
+        xx => x
+        yy => y
+        if (dorv) then
+            dem => damage
+        else
+            dem => visc
+        end if
+    END SUBROUTINE DamageOrVisc        
+end module
 
 FUNCTION EnhancementFactor ( Model, nodenumber, D) RESULT(E)
    USE types
-   USE CoordinateSystems
-   USE SolverUtils
-   USE ElementDescription
    USE DefUtils
    IMPLICIT NONE
    TYPE(Model_t) :: Model
@@ -36,17 +81,43 @@ FUNCTION EnhancementFactor ( Model, nodenumber, D) RESULT(E)
       END IF
    END IF
 
-       E = (1.0 - D)**(-n) 
-    
-  ! write(*,*) D
-  ! write(*,*)'E', E
+   E = (1.0 - D)**(-n) 
 END FUNCTION EnhancementFactor
+
+FUNCTION EnhancedDamagedEta ( Model, nodenumber, D) RESULT(Visc)
+   USE types
+   USE DefUtils
+   IMPLICIT NONE
+   TYPE(Model_t) :: Model
+   TYPE(ValueList_t), POINTER :: Material
+   TYPE(Solver_t), TARGET :: Solver
+   REAL(KIND=dp) :: D(3), Visc, n  
+   INTEGER :: nodenumber
+   LOGICAL :: FirstTime=.TRUE., GotIt
+
+   SAVE FirstTime, n 
+
+   IF (FirstTime) THEN
+   FirstTime = .False.
+    
+      Material => GetMaterial()
+      n = GetConstReal( Material, 'Glen Exponent', GotIt )
+      IF (.NOT.GotIt) THEN
+         WRITE(Message,'(A)') 'Variable Glen Exponent not found. &
+              &Setting to 3.0'
+         CALL INFO('Damage EnhancementFactor', Message, level=2)
+         n = 3.0_dp
+      ELSE
+         WRITE(Message,'(A,F10.4)') 'n = ', n 
+         CALL INFO('Damage EnhancementFactor', Message, level=2)
+      END IF
+   END IF
+
+    Visc = D(1)**2.0_dp * D(2) ** 2.0_dp * (1.0_dp - D(3))**(-n) 
+END FUNCTION EnhancedDamagedEta
 
 FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
    USE types
-   USE CoordinateSystems
-   USE SolverUtils
-   USE ElementDescription
    USE DefUtils
    IMPLICIT NONE
    TYPE(Model_t) :: Model
@@ -75,18 +146,19 @@ FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
    END IF
 
        Visc = D(1)**2.0_dp * (1.0_dp - D(2))**(-n) 
-    
-  ! write(*,*) D
-  ! write(*,*)'E', E
 END FUNCTION EnhancedEta
 
+FUNCTION EtaEtaInit ( Model, nodenumber, D) RESULT(Visc)
+   USE types
+   IMPLICIT NONE
+   TYPE(Model_t) :: Model
+   REAL(KIND=dp) :: D(2), Visc  
+   INTEGER :: nodenumber
+   Visc = D(1)**2.0_dp * D(2)**2.0_dp 
+END FUNCTION EtaEtaInit
 
 FUNCTION SquareInput ( Model, nodenumber, Input) RESULT(Output)
    USE types
-   USE CoordinateSystems
-   USE SolverUtils
-   USE ElementDescription
-   USE DefUtils
    IMPLICIT NONE
    TYPE(Model_t) :: Model
    TYPE(Solver_t), TARGET :: Solver
@@ -134,6 +206,9 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    LOGICAL :: GotIt, FirstTime = .TRUE., Cauchy
    CHARACTER*20 :: USF_Name='SourceDamage'
 
+   TYPE(Variable_t), POINTER :: TimeVar
+   Real(KIND=dp) :: Time
+
    SAVE :: Ind, DIM
    SAVE :: FirstTime, Cauchy
    SAVE :: TauZero, EpsilonZero, Kappa
@@ -180,6 +255,15 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    EpsilonZero = 3.5e-25_dp * 1.0e18_dp * 365.25_dp * 24.0_dp * 60.0_dp * 60.0_dp * TauZero**3
    Call Info('Damage Soure', 'First time completed', level=7)
    END IF ! FirstTime
+
+   ! Initialize immediately
+   source = 0.0_dp
+
+   ! We are only really doing this for debugging
+   TimeVar => VariableGet( Model % Variables, 'Time' )
+   ! IF (ASSOCIATED( TimeVar) .eqv. .false.) go to 100
+   Time = TimeVar % Values(1)
+
 
    ! Get the Stress                     
    StressVariable => VariableGet( Model % Variables, 'Stress')
@@ -256,7 +340,7 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
    END IF
 
    CurrentDamage = MAX(CurrentDamage, 0.0_dp)
-   CurrentDamageValues(CurrentDamagePerm(nodenumber)) = CurrentDamage
+   CurrentDamage = MIN(CurrentDamage, 1.0_dp)
 
    ! CurrentDamage is the value of damage computed at this step. The total damage is
    ! separate. We need to compute the source so that
@@ -264,9 +348,14 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
 
    Call Info('Damage Source', 'CurrentDamage Computed', level=9)
 
-   IF (D > CurrentDamage) THEN
-       source = 0.0_dp
-   ELSE
+   IF (D .LE. CurrentDamage) THEN
        source = CurrentDamage - D
    END IF
-END FUNCTION SourceDamage   
+
+   ! just for debugging
+   IF (abs(time - 1.0e-1) .ge. 1.0e-5) THEN
+        source = 0.0_dp
+        CurrentDamage = 0.0_dp
+   END IF
+   CurrentDamageValues(CurrentDamagePerm(nodenumber)) = CurrentDamage
+100   END FUNCTION SourceDamage
