@@ -118,11 +118,16 @@
         integer :: nx,ny,i,j
         integer :: nx_1,ny_1
         logical :: found
-
+        
+        IF ((nx <= 1) .OR. (ny <= 1)) THEN
+            stop 'rrLI'
+        END IF
         Dx=(xx(nx)-xx(1))/(nx-1)
         Dy=(yy(ny)-yy(1))/(ny-1)
         DxDy=Dx*Dy
-
+        IF ((Dx <= 1) .OR. (Dy <= 1)) THEN
+            stop 'rrLI'
+        END IF
         ! lower left point in DEM
         nx_1=floor((x-xx(1))/Dx) + 1
         ny_1=floor((y-yy(1))/Dy) + 1
@@ -178,10 +183,15 @@
         integer :: nx_1,ny_1
         logical :: found
 
+        IF ((nx <= 1) .OR. (ny <= 1)) THEN
+            stop 'rrLI'
+        END IF
         Dx=(xx(nx)-xx(1))/(nx-1)
         Dy=(yy(ny)-yy(1))/(ny-1)
         DxDy=Dx*Dy
-
+        IF ((Dx <= 1) .OR. (Dy <= 1)) THEN
+            stop 'rrLI'
+        END IF
         ! lower left point in DEM
         nx_1=floor((x-xx(1))/Dx) + 1
         ny_1=floor((y-yy(1))/Dy) + 1
