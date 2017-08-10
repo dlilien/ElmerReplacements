@@ -98,6 +98,23 @@
 !>  2014 : Introduce 3 different ways of defining the grounding line (Mask = 0)
 !>  Last Grounded ; First Floating ; Discontinuous
 
+FUNCTION BetaMzbZbFriction ( Model, nodenumber, y ) RESULT (BFric)
+    USE Types
+    IMPLICIT NONE
+    TYPE(Model_t) :: Model
+    TYPE(Solver_t) :: Solver
+    INTEGER :: nodenumber
+    Real(KIND=dp) :: BFric
+    Real(KIND=dp), dimension (1:3) :: y
+
+    if (y(3) > y(2) + 1.0) then
+        bfric = 0.0_dp
+    else
+        bfric = y(1) ** 2.0
+    end if
+
+END FUNCTION BetaMzbZbFriction
+
 FUNCTION DummyCoef ( Model, nodenumber, y) RESULT(Bdrag)
   USE Types
   USE ElementDescription
