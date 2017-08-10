@@ -112,8 +112,23 @@ FUNCTION BetaMzbZbFriction ( Model, nodenumber, y ) RESULT (BFric)
     else
         bfric = y(1) ** 2.0
     end if
-
 END FUNCTION BetaMzbZbFriction
+
+FUNCTION IsGroundedSSA ( Model, nodenumber, y ) RESULT (grounded)
+    USE Types
+    IMPLICIT NONE
+    TYPE(Model_t) :: Model
+    TYPE(Solver_t) :: Solver
+    INTEGER :: nodenumber
+    Real(KIND=dp) :: grounded
+    Real(KIND=dp), dimension (1:2) :: y
+
+    if (y(2) > y(1) + 1.0) then
+        grounded = 0.0_dp
+    else
+        grounded = 1.0_dp
+    end if
+END FUNCTION IsGroundedSSA
 
 FUNCTION DummyCoef ( Model, nodenumber, y) RESULT(Bdrag)
   USE Types
