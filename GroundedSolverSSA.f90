@@ -219,6 +219,7 @@ SUBROUTINE UpdateZb( Model,Solver,dt,TransientSimulation )
   INTEGER, POINTER :: groundedPerm(:), thicknessPerm(:)
 
   REAL(KIND=dp), POINTER :: VariableValues(:)
+  REAL(KIND=dp), POINTER :: ThicknessValues(:)
   REAL(KIND=dp) :: z, toler=0., rhoi=910., rhow=1028., draft
   REAL(KIND=dp), ALLOCATABLE :: zb(:), grounded(:), thickness(:)
   REAL(KIND=dp), POINTER :: zbs(:), zs(:)
@@ -356,8 +357,16 @@ SUBROUTINE UpdateZb( Model,Solver,dt,TransientSimulation )
      thicknessVar => VariableGet(Model % Mesh % Variables, thicknessname, UnFoundFatal=UnFoundFatal)
      thicknessPerm => thicknessVar % Perm
      thickness(1:n) = thicknessVar % values(thicknessPerm(Element % NodeIndexes))
+     thicknessValues => thicknessVar % values
+     DO i = 1, n
+        IF (thickness(i) .LE. 0) THEN
+            thicknessValues(thicknessPerm(Element % NodeIndexes(i))) = 0.1_dp
+            thickness(i) = 0.1_dp
+        END IF
+     END DO
      NULLIFY(thicknessPerm)
      NULLIFY(thicknessVAR)
+     NULLIFY(thicknessValues)
 
      CALL GetElementNodes( Nodes )
      
