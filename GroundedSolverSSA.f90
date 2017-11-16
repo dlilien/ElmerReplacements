@@ -7,9 +7,8 @@
 
 SUBROUTINE GroundedSolverSSA( Model,Solver,dt,TransientSimulation )
   USE DefUtils
-
   IMPLICIT NONE
-  !------------------------------------------------------------------------------
+
   TYPE(Solver_t) :: Solver
   TYPE(Model_t) :: Model
 
@@ -177,7 +176,6 @@ SUBROUTINE GroundedSolverSSA( Model,Solver,dt,TransientSimulation )
            IF (Nn==0) CYCLE
            IF (VariableValues(Nn) == 1.0_dp) THEN
               VariableValues(Nn) = 0.0_dp
-              PRINT *, 'Grounding Line, (x,y)', Nodes % x( i ), Nodes % y( i )
            END IF
         END DO
      END IF

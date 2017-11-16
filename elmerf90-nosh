@@ -2,31 +2,34 @@
 
 if test "$ELMER_LIB" = ""; then
   if  test "$ELMER_HOME" = ""; then
-     LIBDIR=/usr/local/Cellar/elmer/8.0/share/elmersolver/../../lib/elmersolver
-     INCLUDE=/usr/local/Cellar/elmer/8.0/share/elmersolver/include
+     echo "No lib no home"
+     LIBDIR=/u/dlilien/sw/elmer/haswell_install/share/elmersolver/../../lib/elmersolver
+     INCLUDE=/u/dlilien/sw/elmer/haswell_install/share/elmersolver/include
   else
+     echo "Home no lib"
      LIBDIR=$ELMER_HOME/lib/elmersolver
      INCLUDE=$ELMER_HOME/share/elmersolver/include
   fi
 else
+  echo "Found lib"
   LIBDIR=$ELMER_LIB
   INCLUDE=$ELMER_LIB/../include
 fi
 
 if test "$ELMER_Fortran_COMPILER" = ""; then
-    if [ -f /usr/local/bin/gfortran]; then
-        FC=/usr/local/bin/gfortran
-    else
-        FC=/usr/bin/gfortran
-    fi 
+  FC=/nasa/intel/Compiler/2015.3.187/composer_xe_2015.3.187/bin/intel64/ifort
 else
   FC=$ELMER_Fortran_COMPILER
 fi
 
-cmd="$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -dynamiclib -Wl,-headerpad_max_install_names -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
+echo $LIBDIR
+echo $ELMER_HOME
+
+cmd="$FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -g -fPIC -shared -i_dynamic -nofor_main -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
 printf "%s " $cmd
 printf "\n"
-$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -Wl,-headerpad_max_install_names -L/usr/local/opt/elmer/lib/elmersolver -I$INCLUDE -L$LIBDIR -lelmersolver
-# $FC   $*
+$FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -fPIC -I$INCLUDE -L$LIBDIR
+
+# $FC    $*
 #$FC   $INCLUDE    $*
 #$FC  $INCLUDE    $* -L$LIBDIR -lelmersolver

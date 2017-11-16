@@ -3,12 +3,16 @@
 # dlilien, 2016-05-03 13:54
 #
 #
+# vim:ft=make
+#
+#
 
 FCB=ifort -fPIC
 FC=elmerf90
+FCNS=./elmerf90-nosh
 CC=gcc
-LIB_SOURCES=read_routines.f90 borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 lilien_sliding.f90 DAViscosityInversion.f90 g2di.f90 MeltFunctions.f90 Cost_Functions.f90 DummySolver.f90
-MODULE_SOURCES=read_routines.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 lilien_sliding.f90 GroundedSolverSSA.f90 MeltFunctions.f90
+MODULE_SOURCES=read_routines.f90 MeltFunctionsBase.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 LIB=lilien_lib.so
@@ -21,10 +25,10 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) AdjointSSASolvers $(MODULE)
+all: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) AdjointSSASolvers
 
 $(LIB): $(LIB_OBJECTS)
-	$(FC) $(LIB_OBJECTS) -I . -o $@
+	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
 
 $(MODULE): %.o: %.f90
 	# $(FC) -c $< -o $@
@@ -47,10 +51,13 @@ $(C_OBJECTS): %: %.c
 #        module load gcc
 #    fi
 #	gcc -o ExtrudeMesh ExtrudeMesh.c
+test: testMelt
+	testMelt
+
+testMelt: $(LIB) testMelt.f90
+	$(FCNS) -I./ MeltFunctionsBase.f90 -o testMelt testMelt.f90
+
 
 clean:
 	rm -f *.o *.so MshGlacierDEM ExtrudeMesh
 
-
-# vim:ft=make
-#
