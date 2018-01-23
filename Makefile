@@ -16,8 +16,6 @@ MODULE_SOURCES=read_routines.f90 MeltFunctionsBase.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 LIB=lilien_lib.so
-SRC=./src/AdjointSSA/src
-include ./src/AdjointSSA/Makefile
 
 FORT_SOURCES=MshGlacierDEM.f90
 FORT_OBJECTS=$(FORT_SOURCES:.f90=)
@@ -25,9 +23,12 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: compile test
+all: compile test AdjointSSASolvers
 
-compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) AdjointSSASolvers
+compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS)
+	
+AdjointSSASolvers:
+	$(MAKE) -C src/AdjointSSA compile
 
 $(LIB): $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
@@ -63,4 +64,4 @@ testMelt: $(LIB) testMelt.f90
 
 clean:
 	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
-
+	$(MAKE) -C src/AdjointSSA clean
