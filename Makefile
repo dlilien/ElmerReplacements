@@ -6,7 +6,7 @@
 # vim:ft=make
 #
 #
-
+SHELL=/bin/bash
 FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
@@ -25,7 +25,9 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) AdjointSSASolvers
+all: compile test
+
+compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) AdjointSSASolvers
 
 $(LIB): $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
@@ -41,6 +43,7 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
+	@ if [[ `hostname` =~ pfe* ]] ; then export CC=icc ; fi;
 	$(CC) $< -o $@
 
 #MshGlacierDEM: MshGlacierDEM.f90
@@ -51,13 +54,13 @@ $(C_OBJECTS): %: %.c
 #        module load gcc
 #    fi
 #	gcc -o ExtrudeMesh ExtrudeMesh.c
+#
 test: testMelt
 	testMelt
 
 testMelt: $(LIB) testMelt.f90
 	$(FCNS) -I./ MeltFunctionsBase.f90 -o testMelt testMelt.f90
 
-
 clean:
-	rm -f *.o *.so MshGlacierDEM ExtrudeMesh
+	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
 
