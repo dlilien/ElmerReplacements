@@ -8,6 +8,7 @@ if test "$ELMER_LIB" = ""; then
   else
      echo "Home no lib"
      LIBDIR=$ELMER_HOME/lib/elmersolver
+     LIBDIR2=$ELMER_HOME/lib/
      INCLUDE=$ELMER_HOME/share/elmersolver/include
   fi
 else
@@ -29,7 +30,3 @@ cmd="$FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDIN
 printf "%s " $cmd
 printf "\n"
 $FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -fPIC -I$INCLUDE -L$LIBDIR
-
-# $FC    $*
-#$FC   $INCLUDE    $*
-#$FC  $INCLUDE    $* -L$LIBDIR -lelmersolver

@@ -31,8 +31,8 @@ $(LIB): $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
 
 $(MODULE): %.o: %.f90
-	# $(FC) -c $< -o $@
-	$(FC) -assume byterecl -c $< -o $@
+	$(FC) -c $< -o $@
+	# $(FC) -assume byterecl -c $< -o $@
 
 $(LIB_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@
@@ -41,7 +41,7 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
-	$(CC) $< -o $@
+	$(CC) $< -o $@ -lm
 
 #MshGlacierDEM: MshGlacierDEM.f90
 #	elmerf90-nosh -o MshGlacierDEM MshGlacierDEM.f90
