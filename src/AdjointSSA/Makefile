@@ -27,7 +27,6 @@ $(SOLVERS): $(OBJ)/%.o: $(SRC)/%.F90
 	fi
 	elmerf90 -c $< -o $@
 
-
 clean: 
-	rm -f $(EXECUTABLES)
-	rm -f $(SOLVERS)
+	-rm -f $(EXECUTABLES)
+	-rm -f $(SOLVERS)
