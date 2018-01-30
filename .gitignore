@@ -7,3 +7,4 @@ lilien_lib
 *.mod
 DummySolver
 AdjointSSA*
+testMelt
