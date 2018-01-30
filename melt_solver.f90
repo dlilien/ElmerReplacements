@@ -1,10 +1,3 @@
-!
-! melt_solver.f90
-! Copyright (C) 2018 dlilien <dlilien@pfe22>
-!
-! Distributed under terms of the MIT license.
-!
-
       FUNCTION cubicmeters2gt(m3) RESULT(gt)
           USE Types
           implicit NONE
@@ -31,7 +24,7 @@
         TYPE(Nodes_t) :: Nodes
 
         REAL(KIND=dp) :: dt, total_melt, element_area, detJ, global_melt
-        REAL(KIND=dp) :: mr, mf, melt_ratio, cubicmeters2gt, time
+        REAL(KIND=dp) :: mr, mf, melt_ratio, cubicmeters2gt, time, element_melt
         LOGICAL :: TransientSimulation, stat, scalemelt, tv
         LOGICAL :: getSecondDerivatives=.FALSE., found=.FALSE.
         LOGICAL :: firsttime=.TRUE.
@@ -69,8 +62,8 @@
 
             mf = GetConstReal(GetSolverParams(), 'Melt Factor', found)
             IF (.NOT.Found) THEN
-                mf = 1
-                CALL WARN(SolverName,'No MR or MF, no scaling')
+                mf = 1.0_dp
+                CALL INFO(SolverName,'No mf found, using 1.0', level=3)
             END IF
 
             bmpointer => VariableGet(Solver % Mesh % Variables, melt_var)
@@ -111,23 +104,30 @@
                         getSecondDerivatives)
                 ! The two in the next line is a little worrisome--i'm not
                 ! sure why i need it
-                total_melt = total_melt + SUM( BaseMelt(1:IP % n) * Basis(1:IP % n) * detJ) / 2.0_dp
+                element_melt = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n) * detJ) / 2.0_dp
+                IF ((element_melt /= 0.0_dp).AND.(element_melt == element_melt)) THEN
+                    write(*, *) element_melt
+                    total_melt = total_melt + element_melt
+                END IF
             END DO
 
             ! this line merges parallel partitions to one. flag arg is
             ! sum/min/max
             global_melt = ParallelReduction(total_melt, 0)
-            global_melt = cubicmeters2gt(global_melt)
             
             ! Now if we are time variable we need to find our present
             ! melt ratio
             IF (tv) THEN
                 TimeVar => VariableGet(Solver % Mesh % Variables, 'Time')
                 Time = TimeVar % Values(1)
-                mr = cubicmeters2gt(41309491925.9_dp) * RescaleByTime(Time + 1996.0_dp)
+                mr = 41309491925.9_dp * RescaleByTime(Time + 1996.0_dp)
             END IF
 
-            melt_ratio = mr / global_melt
+            melt_ratio = mr / global_melt * mf
+            IF (melt_ratio /= melt_ratio) THEN
+                melt_ratio = 1.0_dp
+            END IF
+            write(*, *) melt_ratio
         END IF
 
         ! Now we need to update everything
