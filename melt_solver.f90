@@ -39,7 +39,7 @@
         INTEGER, POINTER :: Permutation(:), NodeIndexes(:), bmperm(:)
         REAL(KIND=dp), POINTER :: VariableValues(:), bmvals(:)
 
-        SAVE tv, mr, mf, scalemelt, firsttime, melt_var, melt_ratio, global_melt
+        SAVE tv, mr, mf, scalemelt, firsttime, melt_var, melt_ratio, global_melt, unpin_time
 
         IF ( firsttime ) THEN
             melt_var = GetString(GetSolverParams(), 'Melt Variable', found)
@@ -149,6 +149,7 @@
         ! We need to avoid overriding a fixed rate from previous solvers
         TimeVar => VariableGet(Solver % Mesh % Variables, 'Time')
         Time = TimeVar % Values(1)
+
         IF (tv.AND.(Time <= unpin_time)) THEN
             mr = 41309491925.9_dp * RescaleByTime(Time + 1996.0_dp)
         END IF
