@@ -63,7 +63,11 @@
             IF (.NOT.tv) THEN
                 mr = GetConstReal(GetSolverParams(), 'Melt Rate', found)
                 IF (.NOT.Found) THEN
-                    CALL FATAL(SolverName,'No MR or TV!!!!')
+                    mr = HUGE(1.0_dp)
+                    IF (ParEnv % myPe == 0) THEN 
+                        CALL INFO(SolverName,&
+                        'No MR or TV, you are only  using MF', level=3)
+                    END IF
                 ELSE
                     IF (ParEnv % myPe == 0) THEN 
                         CALL INFO(SolverName,'Melt rate is pinned to MR', level=3)
@@ -150,13 +154,17 @@
         TimeVar => VariableGet(Solver % Mesh % Variables, 'Time')
         Time = TimeVar % Values(1)
 
-        IF (tv.AND.(Time <= unpin_time)) THEN
+        IF (tv.AND.((Time <= unpin_time).OR.firsttime)) THEN
             mr = 41309491925.9_dp * RescaleByTime(Time + 1996.0_dp)
         END IF
 
         ! we only update the melt_ratio if we are less than the unpin time
         IF ((Time <= unpin_time).OR.firsttime) THEN
-            melt_ratio = abs(mr / global_melt * mf)
+            IF (abs(mr) >= HUGE(1.0_dp) / 2) THEN
+                melt_ratio = mf
+            ELSE
+                melt_ratio = abs(mr / global_melt * mf)
+            END IF
             IF (melt_ratio /= melt_ratio) THEN
                 melt_ratio = 1.0_dp
             END IF
