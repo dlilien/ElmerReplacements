@@ -30,6 +30,7 @@
                     IF (years(i) >= t) THEN
                         frac = (t - years(i - 1)) / (years(i) - years(i - 1))
                         scalef = melts(i - 1) * (1 - frac) + melts(i) * frac
+                        EXIT
                     END IF 
                 END DO
             END IF
