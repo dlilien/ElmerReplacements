@@ -11,8 +11,8 @@ FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
 CC=gcc
-LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 lilien_sliding.f90 GroundedSolverSSA.f90 melt_solver.f90 MeltFunctions.f90
-MODULE_SOURCES=read_routines.f90 MeltFunctionsBase.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 lilien_sliding.f90 GroundedSolverSSA.f90 melt_solver.f90
+MODULE_SOURCES=read_routines.f90 MeltFunctions.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 LIB=lilien_lib.so
@@ -34,8 +34,7 @@ $(LIB): $(MODULE) $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
 
 $(MODULE): %.o: %.f90
-	$(FC) -c $< -o $@
-	# $(FC) -assume byterecl -c $< -o $@
+	@ if [[ `hostname` =~ pfe* ]] ; then $(FC) -assume byterecl -c $< -o $@; else $(FC) -c $< -o $@; fi
 
 $(LIB_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@
@@ -44,8 +43,7 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
-	@ if [[ `hostname` =~ pfe* ]] ; then export CC=icc ; fi;
-	$(CC) $< -o $@
+	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; fi;
 
 #MshGlacierDEM: MshGlacierDEM.f90
 #	elmerf90-nosh -o MshGlacierDEM MshGlacierDEM.f90

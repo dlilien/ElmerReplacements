@@ -1,147 +1,81 @@
-        FUNCTION BMF_fsbad( model, nodenumber, z) & 
-            RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
+!
+! MeltFunctions.f90
+! Copyright (C) 2016 dlilien <dlilien90@gmail.com>
+!
+! Distributed under terms of the MIT license.
+!
+      Module MeltFunctions
+          implicit None
+          public
+          contains
+
+        FUNCTION RescaleByTime(t) RESULT(scalef)
+            USE Types
+            IMPLICIT NONE
+            REAL(KIND=dp) :: t, scalef, frac
+            INTEGER :: i
+            INTEGER :: numyears
+            REAL(KIND=dp), DIMENSION(8) :: years, melts
+            numyears = 8
+            years = (/1996.0, 2006.0, 2007.0, 2008.0, 2009.0, &
+                                2010.0, 2011.7, 2014.5 /)
+            melts = (/ 1.0, 1.37492872682,  1.45383090385, 1.51164627543, 1.54864336104, 1.59925859866, 1.56241501754, 1.65287227503 /)
+            IF (t <= years(1)) THEN
+                scalef = melts(1)
+            ELSE IF (t >= years(numyears)) THEN
+                scalef = melts(numyears)
+            ELSE
+                DO i = 2,(numyears)
+                    IF (years(i) >= t) THEN
+                        frac = (t - years(i - 1)) / (years(i) - years(i - 1))
+                        scalef = melts(i - 1) * (1 - frac) + melts(i) * frac
+                        EXIT
+                    END IF 
+                END DO
+            END IF
+            RETURN
+        END
+
+        FUNCTION BasalMeltFavier(z) RESULT(melt)
+            USE Types
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -600_dp) THEN
+                melt = 200_dp
+            ELSE IF (z >= -400) THEN
                 melt = 0_dp
             ELSE
-                IF (z(1)<=-600_dp) THEN
-                    melt = 200_dp
-                ELSE IF (z(1)>=400) THEN
-                    melt = 0_dp
-                ELSE
-                    melt = - 0.5_dp * z(1) - 200_dp
-                END IF
+                melt = - 0.5_dp * z - 200_dp
             END IF
-            return
+            RETURN
         END
 
-        FUNCTION BMJ_fsbad( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltJoughin(z) RESULT(melt)
             Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -600_dp) THEN
+                melt = -0.273_dp * z - 154_dp
+            ELSE IF (z >= -375_dp) THEN
                 melt = 0_dp
             ELSE
-                IF (z(1)<=-600_dp) THEN
-                    melt = -0.273_dp * z(1) - 154_dp
-                ELSE IF (z(1)>=375_dp) THEN
-                    melt = 0_dp
-                ELSE
-                    melt = -0.04_dp * z(1) - 15_dp
-                END IF
+                melt = -0.04_dp * z - 15_dp
             END IF
-            return
+            RETURN
         END
 
-        FUNCTION BMS_fsbad( model, nodenumber, z) RESULT(melt)
+        FUNCTION BasalMeltShean(z) RESULT(melt)
             Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
-                melt = 0_dp
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -400_dp) THEN
+                melt = -0.182_dp * (z + 400.0_dp)
             ELSE
-                IF (z(1)<=-400_dp) THEN
-                    melt = -0.182_dp * (z(1) + 400.0_dp)
-                ELSE
-                    melt = 0.0_dp
-                END IF
+                melt = 0.0_dp
             END IF
-            return
+            RETURN
         END
-
-        FUNCTION BMZ_fsbad( model, nodenumber, z) RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            melt = 0_dp
-            return
-        END
-
-        FUNCTION BMF_negbad( model, nodenumber, z) & 
-            RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
-                melt = 0_dp
-            ELSE
-                IF (z(1)<=-600_dp) THEN
-                    melt = -200_dp
-                ELSE IF (z(1)>=400) THEN
-                    melt = 0_dp
-                ELSE
-                    melt = 0.5 * z(1) + 200_dp
-                END IF
-            END IF
-            return
-        END
-
-        FUNCTION BMJ_negbad( model, nodenumber, z) &
-            RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
-                melt = 0_dp
-            ELSE
-                IF (z(1)<=-600_dp) THEN
-                    melt = 0.273_dp * z(1) + 154_dp
-                ELSE IF (z(1)>=375_dp) THEN
-                    melt = 0_dp
-                ELSE
-                    melt = 0.04_dp * z(1) + 15_dp
-                END IF
-            END IF
-            return
-        END
-
-        FUNCTION BMS_negbad( model, nodenumber, z) RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            IF (Z(2) > 0.5_dp) THEN
-                melt = 0_dp
-            ELSE
-                IF (z(1)<=-400_dp) THEN
-                    melt = 0.182_dp * (z(1) + 400.0_dp)
-                ELSE
-                    melt = 0.0_dp
-                END IF
-            END IF
-            return
-        END
-
-        FUNCTION BMZ_negbad( model, nodenumber, z) &
-            RESULT(melt)
-            Use Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z(2)
-            Type(Model_t) :: model
-            Integer :: nodenumber
-            melt = 0_dp
-            return
-        END
+      END MODULE MeltFunctions
