@@ -66,7 +66,7 @@
                     mr = HUGE(1.0_dp)
                     IF (ParEnv % myPe == 0) THEN 
                         CALL INFO(SolverName,&
-                        'No MR or TV, you are only  using MF', level=3)
+                        'No MR or TV, you are only using MF', level=3)
                     END IF
                 ELSE
                     IF (ParEnv % myPe == 0) THEN 
@@ -81,6 +81,10 @@
                 IF (ParEnv % myPe == 0) THEN 
                     CALL INFO(SolverName,'No mf found, using 1.0', level=3)
                 END IF
+            ELSE
+                IF (ParEnv % myPe == 0) THEN 
+                    CALL INFO(SolverName, 'MF Found', level=3)
+                END IF
             END IF
 
             unpin_time = GetConstReal(GetSolverParams(), 'Unpin Time', found)
@@ -89,6 +93,10 @@
                 IF (ParEnv % myPe == 0) THEN 
                     CALL INFO(SolverName,&
                               'Not unpinning from target time', level=3)
+                END IF
+            ELSE
+                IF (ParEnv % myPe == 0) THEN 
+                    CALL INFO(SolverName, 'Unpinning', level=3)
                 END IF
             END IF
 

@@ -11,16 +11,15 @@
 
         FUNCTION RescaleByTime(t) RESULT(scalef)
             USE Types
-            implicit none
-            Real(kind=dp) :: t, scalef, frac
+            IMPLICIT NONE
+            REAL(KIND=dp) :: t, scalef, frac
             INTEGER :: i
             INTEGER :: numyears
             REAL(KIND=dp), DIMENSION(8) :: years, melts
             numyears = 8
             years = (/1996.0, 2006.0, 2007.0, 2008.0, 2009.0, &
                                 2010.0, 2011.7, 2014.5 /)
-            melts = (/ 1.0, 1.37492872682,  1.45383090385, 1.51164627543, & 
-                    1.54864336104, 1.59925859866, 1.56241501754, 1.65287227503 /)
+            melts = (/ 1.0, 1.37492872682,  1.45383090385, 1.51164627543, 1.54864336104, 1.59925859866, 1.56241501754, 1.65287227503 /)
             IF (t <= years(1)) THEN
                 scalef = melts(1)
             ELSE IF (t >= years(numyears)) THEN
@@ -39,44 +38,44 @@
 
         FUNCTION BasalMeltFavier(z) RESULT(melt)
             USE Types
-            implicit none
-            Real(kind=dp) :: melt
-            Real(kind=dp) :: z
-            IF (z<=-600_dp) THEN
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -600_dp) THEN
                 melt = 200_dp
-            ELSE IF (z>=400) THEN
+            ELSE IF (z >= -400) THEN
                 melt = 0_dp
             ELSE
                 melt = - 0.5_dp * z - 200_dp
             END IF
-            return
+            RETURN
         END
 
         FUNCTION BasalMeltJoughin(z) RESULT(melt)
-        Use Types
-        implicit none
-        Real(kind=dp) :: melt
-        Real(kind=dp) :: z
-        IF (z<=-600_dp) THEN
-            melt = -0.273_dp * z - 154_dp
-        ELSE IF (z>=375_dp) THEN
-            melt = 0_dp
-        ELSE
-            melt = -0.04_dp * z - 15_dp
-        END IF
-        RETURN
+            Use Types
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -600_dp) THEN
+                melt = -0.273_dp * z - 154_dp
+            ELSE IF (z >= -375_dp) THEN
+                melt = 0_dp
+            ELSE
+                melt = -0.04_dp * z - 15_dp
+            END IF
+            RETURN
         END
 
         FUNCTION BasalMeltShean(z) RESULT(melt)
-        Use Types
-        implicit none
-        Real(kind=dp) :: melt
-        Real(kind=dp) :: z
-        IF (z<=-400_dp) THEN
-            melt = -0.182_dp * (z + 400.0_dp)
-        ELSE
-            melt = 0.0_dp
-        END IF
-        RETURN
+            Use Types
+            IMPLICIT NONE
+            REAL(KIND=dp) :: melt
+            REAL(KIND=dp) :: z
+            IF (z <= -400_dp) THEN
+                melt = -0.182_dp * (z + 400.0_dp)
+            ELSE
+                melt = 0.0_dp
+            END IF
+            RETURN
         END
       END MODULE MeltFunctions
