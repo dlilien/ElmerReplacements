@@ -8,5 +8,8 @@ services:
 before_install:
     - docker pull dlilien/elmerreplacements
 
+install:
+    - docker run dlilien/elmerreplacements
+
 script:
     - docker run dlilien/elmerreplacements
