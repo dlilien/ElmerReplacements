@@ -1,0 +1,12 @@
+language: c
+
+sudo: required
+
+services:
+    - docker
+
+before_install:
+    - docker pull dlilien/elmerreplacements
+
+script:
+    - docker run dlilien/elmerreplacements
