@@ -46,7 +46,7 @@ $(C_OBJECTS): %: %.c
 	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(CC) $< -o $@ -lm ; fi
 
 test: testMelt
-	testMelt
+	./testMelt
 
 testMelt: $(LIB) testMelt.f90
 	$(FCNS) -I./ MeltFunctions.f90 -o testMelt testMelt.f90
