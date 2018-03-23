@@ -23,7 +23,7 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: compile test AdjointSSASolvers
+all: compile AdjointSSASolvers
 
 compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS)
 	

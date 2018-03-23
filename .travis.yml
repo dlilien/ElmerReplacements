@@ -12,4 +12,5 @@ install:
     - docker run  dlilien/elmerreplacements
 
 script:
-    - docker run dlilien/elmerreplacements /bin/sh -c "make test"
+    - docker run  dlilien/elmerreplacements
+    # - docker run dlilien/elmerreplacements /bin/sh -c "make test"
