@@ -43,13 +43,13 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
-	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(CC) $< -o $@; fi
+	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(CC) $< -o $@ -lm ; fi
 
 test: testMelt
 	testMelt
 
 testMelt: $(LIB) testMelt.f90
-	$(FCNS) -I./ MeltFunction.f90 -o testMelt testMelt.f90
+	$(FCNS) -I./ MeltFunctions.f90 -o testMelt testMelt.f90
 
 clean:
 	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
