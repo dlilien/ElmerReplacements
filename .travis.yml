@@ -9,7 +9,7 @@ before_install:
     - docker pull dlilien/elmerreplacements
 
 install:
-    - docker run -i dlilien/elmerreplacements
+    - docker run  dlilien/elmerreplacements
 
 script:
     - docker run dlilien/elmerreplacements /bin/sh -c "make test"
