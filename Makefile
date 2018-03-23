@@ -58,7 +58,7 @@ test: testMelt
 	testMelt
 
 testMelt: $(LIB) testMelt.f90
-	$(FCNS) -I./ MeltFunctionsBase.f90 -o testMelt testMelt.f90
+	$(FCNS) -I./ MeltFunction.f90 -o testMelt testMelt.f90
 
 clean:
 	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
