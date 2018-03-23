@@ -26,6 +26,7 @@ if test "$ELMER_Fortran_COMPILER" = ""; then
         FC=/nasa/intel/Compiler/2015.3.187/composer_xe_2015.3.187/bin/intel64/ifort
        else
         FC=/usr/bin/gfortran
+    fi
   fi
 else
   FC=$ELMER_Fortran_COMPILER
