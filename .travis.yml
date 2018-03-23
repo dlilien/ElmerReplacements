@@ -5,12 +5,8 @@ sudo: required
 services:
     - docker
 
-before_install:
+install:
     - docker pull dlilien/elmerreplacements
 
-install:
-    - docker run  dlilien/elmerreplacements
-
 script:
-    - docker run  dlilien/elmerreplacements
-    # - docker run dlilien/elmerreplacements /bin/sh -c "make test"
+    - docker run dlilien/elmerreplacements /bin/sh -c "git pull; make all; make test"
