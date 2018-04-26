@@ -43,7 +43,7 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
-	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; fi;
+	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(FC) -c $< -o $@ fi;
 
 #MshGlacierDEM: MshGlacierDEM.f90
 #	elmerf90-nosh -o MshGlacierDEM MshGlacierDEM.f90
