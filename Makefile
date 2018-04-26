@@ -10,7 +10,7 @@ SHELL=/bin/bash
 FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
-CC=gcc
+CC=/usr/bin/gcc
 LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 lilien_sliding.f90 GroundedSolverSSA.f90 melt_solver.f90
 MODULE_SOURCES=read_routines.f90 MeltFunctions.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
@@ -23,7 +23,7 @@ FORT_OBJECTS=$(FORT_SOURCES:.f90=)
 C_SOURCES=ExtrudeMesh.c
 C_OBJECTS=$(C_SOURCES:.c=)
 
-all: compile test AdjointSSASolvers
+all: compile AdjointSSASolvers
 
 compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS)
 	
@@ -34,7 +34,7 @@ $(LIB): $(MODULE) $(LIB_OBJECTS)
 	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
 
 $(MODULE): %.o: %.f90
-	@ if [[ `hostname` =~ pfe* ]] ; then $(FC) -assume byterecl -c $< -o $@; else $(FC) -c $< -o $@; fi
+	@ if [[ `hostname` =~ pfe* ]] ; then $(FC) -assume byterecl -c $< -o $@; else $(FC) -c $< -o $@ -lm ; fi
 
 $(LIB_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@
@@ -43,22 +43,13 @@ $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
 
 $(C_OBJECTS): %: %.c
-	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(FC) -c $< -o $@ fi;
+	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(CC) $< -o $@ -lm ; fi
 
-#MshGlacierDEM: MshGlacierDEM.f90
-#	elmerf90-nosh -o MshGlacierDEM MshGlacierDEM.f90
-
-#ExtrudeMesh: ExtrudeMesh.c
-#    if [[ `hostname` =~ pfe* ]]; then
-#        module load gcc
-#    fi
-#	gcc -o ExtrudeMesh ExtrudeMesh.c
-#
 test: testMelt
-	testMelt
+	./testMelt
 
 testMelt: $(LIB) testMelt.f90
-	$(FCNS) -I./ MeltFunctionsBase.f90 -o testMelt testMelt.f90
+	$(FCNS) -I./ MeltFunctions.f90 -o testMelt testMelt.f90
 
 clean:
 	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh

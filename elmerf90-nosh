@@ -22,7 +22,11 @@ if test "$ELMER_Fortran_COMPILER" = ""; then
   if test $THISHOST = "loki.ess.washington.edu"; then
       FC=/usr/bin/gfortran
   else
-    FC=/nasa/intel/Compiler/2015.3.187/composer_xe_2015.3.187/bin/intel64/ifort
+      if [ -d /nasa/intel/Compiler ]; then
+        FC=/nasa/intel/Compiler/2015.3.187/composer_xe_2015.3.187/bin/intel64/ifort
+       else
+        FC=/usr/bin/gfortran
+    fi
   fi
 else
   FC=$ELMER_Fortran_COMPILER
@@ -34,4 +38,4 @@ echo $ELMER_HOME
 cmd="$FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -g -fPIC -shared -i_dynamic -nofor_main -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
 printf "%s " $cmd
 printf "\n"
-$FC $*    -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -fPIC -I$INCLUDE -L$LIBDIR
+$FC $*  -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O2 -fPIC -I$INCLUDE -L$LIBDIR
