@@ -27,7 +27,7 @@
         REAL(KIND=dp) :: mr, mf, melt_ratio, cubicmeters2gt, time, element_melt
         REAL(KIND=dp) :: meltrate, max_melt_rate=3000.0
         REAL(KIND=dp) :: unpin_time
-        LOGICAL :: TransientSimulation, stat, scalemelt, tv
+        LOGICAL :: TransientSimulation, stat, scalemelt, tv, UnfoundFatal
         LOGICAL :: getSecondDerivatives=.FALSE., found=.FALSE.
         LOGICAL :: firsttime=.TRUE.
         INTEGER :: t, n, k, i, p
@@ -39,10 +39,15 @@
         INTEGER, POINTER :: Permutation(:), NodeIndexes(:), bmperm(:)
         REAL(KIND=dp), POINTER :: VariableValues(:), bmvals(:)
 
-        SAVE tv, mr, mf, scalemelt, firsttime, melt_var, melt_ratio, global_melt, unpin_time
+        SAVE tv, mr, mf, scalemelt, firsttime, melt_var, melt_ratio, global_melt, unpin_time, bmperm, bmvals
+
+        PointerToVariable => Solver % Variable
+        Permutation  => PointerToVariable % Perm
+        VariableValues => PointerToVariable % Values
 
         IF ( firsttime ) THEN
             melt_var = GetString(GetSolverParams(), 'Melt Variable', found)
+
             IF (.NOT.Found) THEN
                 melt_var = 'BaseMelt'
                 IF (ParEnv % myPe == 0) THEN 
@@ -100,9 +105,18 @@
                 END IF
             END IF
 
-            bmpointer => VariableGet(Solver % Mesh % Variables, melt_var)
-            IF (.NOT.ASSOCIATED( bmpointer) ) THEN
-                CALL FATAL(solvername, 'Base melt variable unfound')
+            bmpointer => VariableGet(Solver % Mesh % Variables, melt_var, UnfoundFatal=UnfoundFatal)
+
+            IF (.NOT.ASSOCIATED( bmpointer).OR.(UnfoundFatal) ) THEN
+                IF (ParEnv % myPe == 0) THEN 
+                    CALL FATAL(SolverName, 'Base melt variable unfound')
+                END IF
+            ELSE
+                bmperm => bmpointer % Perm
+                bmvals => bmpointer % Values
+                IF (ParEnv % myPe == 0) THEN 
+                    CALL INFO(SolverName, 'Found BaseMelt Variable', level=3)
+                END IF
             END IF
 
             OPEN (12, FILE=MeltFile)
@@ -111,14 +125,6 @@
 
             melt_ratio = 1.0_dp
         END IF
-
-        bmpointer => VariableGet(Solver % Mesh % Variables, melt_var)
-        bmperm => bmpointer % Perm
-        bmvals => bmpointer % Values
-
-        PointerToVariable => Solver % Variable
-        Permutation  => PointerToVariable % Perm
-        VariableValues => PointerToVariable % Values
 
         ! We can skip most of the calculations if we are not time
         ! variable. Also i think we can just do this once per timestep
