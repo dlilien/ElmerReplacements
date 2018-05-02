@@ -34,6 +34,29 @@
               end do
           end
 
+          subroutine get_z(fn, x, y, z)
+              implicit None
+              character (len=128):: fn
+              integer i, r, np
+              real, dimension(:), allocatable :: x, y, z
+              open(10, access='DIRECT', recl=4, file=fn)
+              read(10, rec=1) np
+              allocate (x(np), y(np), z(np))
+              r=2
+              do i=1,np
+                  read(10, rec=r) x(i)
+                  r = r+1
+              end do
+              do i=1,np
+                  read(10, rec=r) y(i)
+                  r = r+1
+              end do
+              do i=1,np
+                  read(10, rec=r) z(i)
+                  r = r+1
+              end do
+          end
+
           subroutine get_threed_grid(fn, x, y, z)
             implicit None
             character (len=128):: fn
