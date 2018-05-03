@@ -145,7 +145,7 @@ FUNCTION DummyCoef ( Model, nodenumber, y) RESULT(Bdrag)
 END FUNCTION DummyCoef
 
 
-FUNCTION SlidCoef_Contact ( Model, nodenumber, y) RESULT(Bdrag)
+FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
 
   USE Types
   USE ElementDescription
@@ -455,7 +455,7 @@ FUNCTION SlidCoef_Contact ( Model, nodenumber, y) RESULT(Bdrag)
      ! Bdrag = Sliding_weertman(Model, nodenumber, y)
      Bdrag = 0
   END IF
-END FUNCTION SlidCoef_Contact
+END FUNCTION SlidCoef_Contact_lilien
 
 FUNCTION Sliding_lilien_simple (Model, nodenumber, vel) RESULT(Bdrag)
 
