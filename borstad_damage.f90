@@ -35,11 +35,7 @@ FUNCTION EnhancementFactor ( Model, nodenumber, D) RESULT(E)
          CALL INFO('Damage EnhancementFactor', Message, level=2)
       END IF
    END IF
-
        E = (1.0 - D)**(-n) 
-    
-  ! write(*,*) D
-  ! write(*,*)'E', E
 END FUNCTION EnhancementFactor
 
 FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
@@ -73,11 +69,7 @@ FUNCTION EnhancedEta ( Model, nodenumber, D) RESULT(Visc)
          CALL INFO('Damage EnhancementFactor', Message, level=2)
       END IF
    END IF
-
        Visc = D(1)**2.0_dp * (1.0_dp - D(2))**(-n) 
-    
-  ! write(*,*) D
-  ! write(*,*)'E', E
 END FUNCTION EnhancedEta
 
 
@@ -157,7 +149,7 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
 
    ! Cauchy or deviatoric stresses ?
       Cauchy = ListGetLogical( Material , 'Cauchy', Gotit )
-      WRITE(Message,'(A,L1)') 'Cauchy stress tensor computed ? ', Cauchy 
+      WRITE(Message,'(A,L1)') 'Cauchy computed ? ', Cauchy 
          CALL INFO('Damage Source', Message, level=2)
 
        ! Determination of the stress threshold   
@@ -174,11 +166,11 @@ FUNCTION SourceDamage (Model, nodenumber, D) RESULT(Source)
           CALL INFO('USF_Damage','No "Borstad Kappa" given, set &
           to 2.8_dp', level=2)
         END IF
-   ! For now we just use pick a temperature value to calculate varepsilon_0
-   ! Go with T=-10 from C&P, :: 3.5e-25 s^-1 Pa^-3
-   ! So in a^-1 MPa^-3 this is
-   EpsilonZero = 3.5e-25_dp * 1.0e18_dp * 365.25_dp * 24.0_dp * 60.0_dp * 60.0_dp * TauZero**3
-   Call Info('Damage Soure', 'First time completed', level=7)
+       ! For now we just use pick a temperature value to calculate varepsilon_0
+       ! Go with T=-10 from C&P, :: 3.5e-25 s^-1 Pa^-3
+       ! So in a^-1 MPa^-3 this is
+       EpsilonZero = 3.5e-25_dp * 1.0e18_dp * 365.25_dp * 24.0_dp * 60.0_dp * 60.0_dp * TauZero**3
+       Call Info('Damage Soure', 'First time completed', level=2)
    END IF ! FirstTime
 
    ! Get the Stress                     

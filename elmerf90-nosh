@@ -19,10 +19,10 @@ else
   FC=$ELMER_Fortran_COMPILER
 fi
 
-cmd="$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -dynamiclib -Wl,-headerpad_max_install_names -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
+cmd="$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O0 -fPIC -Wl,-headerpad_max_install_names -I$INCLUDE -L$LIBDIR -shared -lelmersolver"
 printf "%s " $cmd
 printf "\n"
-$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O3 -fPIC -Wl,-headerpad_max_install_names -L/usr/local/opt/elmer/lib/elmersolver -I$INCLUDE -L$LIBDIR -lelmersolver
+$FC $*   -DCONTIG=,CONTIGUOUS -DHAVE_EXECUTECOMMANDLINE -DUSE_ISO_C_BINDINGS -DUSE_ARPACK -O0 -fPIC -Wl,-headerpad_max_install_names -I$INCLUDE -L$LIBDIR -lelmersolver
 # $FC   $*
 #$FC   $INCLUDE    $*
 #$FC  $INCLUDE    $* -L$LIBDIR -lelmersolver
