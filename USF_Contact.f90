@@ -22,66 +22,6 @@
 ! *****************************************************************************/
 ! ******************************************************************************
 ! *
-! *  Authors: Olivier Gagliardini, Ga¨el Durand, Thomas Zwinger
-! *  Email:   
-! *  Web:     http://elmerice.elmerfem.org
-! *
-! *  Original Date: 
-! *   2007/10/25. Gael Durand
-! *   2008/04/06 OG 2D -> 3D
-! *   2009/05/18 OG FirstTime in the SAVE !
-! *****************************************************************************
-!> USF_Sliding.f90
-!> 
-!> 
-!>  Gives the basal drag for different sliding law
-!> 
-!>  (1) Sliding_Weertman
-!>  Need some inputs in the sif file.
-!>  Parameters: Weertman Friction Coefficient      -> C 
-!>              Weertman Exponent         -> m
-!>              Weertman Linear Velocity  -> ut0
-!> 
-!>  Compute the Bdrag coefficient such as tau_b = Bdrag ub
-!>  for the non-linear Weertman law tau_b = C ub^m
-!>  To linearize the Weertman law, we can distinguish 4 cases:
-!>    1/ ut=0 , tau_b=0     => Bdrag = infinity (no sliding, first step)
-!>    2/ ut=0 , tau_b =/0   => Bdrag = C^1/m tau_b^(1-1/m)
-!>    3/ ut=/0 , tau_b=0    => Bdrag = Cub^(m-1)
-!>    4/ ut=/0 , tau_b=/0   => case 3 
-!>  For cases 3 and 4, if ut < ut0, Bdrag = C ut0^{m-1}
-!> 
-!> 
-!>  (2) Friction_Coulomb Sliding Gag JGR 2007
-!>  Need some inputs in the sif file.
-!>  Parameters: Friction Law Sliding Coefficient      -> As 
-!>              Friction Law Post-Peak Exponent         -> q >= 1
-!>              Friction Law Maximum Value            -> C ~ max bed slope   
-!>              Friction Law Linear Velocity          -> ut0
-!/*****************************************************************************/
-! *
-! *  Elmer/Ice, a glaciological add-on to Elmer
-! *  http://elmerice.elmerfem.org
-! *
-! * 
-! *  This program is free software; you can redistribute it and/or
-! *  modify it under the terms of the GNU General Public License
-! *  as published by the Free Software Foundation; either version 2
-! *  of the License, or (at your option) any later version.
-! * 
-! *  This program is distributed in the hope that it will be useful,
-! *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-! *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! *  GNU General Public License for more details.
-! *
-! *  You should have received a copy of the GNU General Public License
-! *  along with this program (in file fem/GPL-2); if not, write to the 
-! *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
-! *  Boston, MA 02110-1301, USA.
-! *
-! *****************************************************************************/
-! ******************************************************************************
-! *
 ! *  Authors: 
 ! *  Email:   
 ! *  Web:     http://elmerice.elmerfem.org
@@ -98,40 +38,8 @@
 !>  2014 : Introduce 3 different ways of defining the grounding line (Mask = 0)
 !>  Last Grounded ; First Floating ; Discontinuous
 
-FUNCTION BetaMzbZbFriction ( Model, nodenumber, y ) RESULT (BFric)
-    USE Types
-    IMPLICIT NONE
-    TYPE(Model_t) :: Model
-    TYPE(Solver_t) :: Solver
-    INTEGER :: nodenumber
-    Real(KIND=dp) :: BFric
-    Real(KIND=dp), dimension (1:3) :: y
+FUNCTION SlidCoef_Contact ( Model, nodenumber, y) RESULT(Bdrag)
 
-    if (y(3) > y(2) + 1.0) then
-        bfric = 0.0_dp
-    else
-        bfric = y(1) ** 2.0
-    end if
-END FUNCTION BetaMzbZbFriction
-
-FUNCTION IsGroundedSSA ( Model, nodenumber, y ) RESULT (grounded)
-    USE Types
-    IMPLICIT NONE
-    TYPE(Model_t) :: Model
-    TYPE(Solver_t) :: Solver
-    INTEGER :: nodenumber
-    Real(KIND=dp) :: grounded
-    Real(KIND=dp), dimension (1:2) :: y
-
-    if (y(2) > y(1) + 1.0) then
-        grounded = 0.0_dp
-    else
-        grounded = 1.0_dp
-    end if
-END FUNCTION IsGroundedSSA
-
-FUNCTION DummyCoef ( Model, nodenumber, y) RESULT(Bdrag)
-  USE Types
   USE ElementDescription
   USE DefUtils
 
@@ -139,44 +47,30 @@ FUNCTION DummyCoef ( Model, nodenumber, y) RESULT(Bdrag)
 
   TYPE(Model_t) :: Model
   TYPE(Solver_t) :: Solver
-  INTEGER :: nodenumber
-  Real(KIND=dp) :: y, bdrag
-  bdrag = y ** 2.0
-END FUNCTION DummyCoef
-
-
-FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
-
-  USE Types
-  USE ElementDescription
-  USE DefUtils
-
-  IMPLICIT NONE
-
-  TYPE(Model_t) :: Model
-  TYPE(Solver_t) :: Solver
-  TYPE(variable_t), POINTER :: TimeVar, NormalVar, VarSurfResidual, GroundedMaskVar, HydroVar, DistanceVar
+  TYPE(variable_t), POINTER :: TimeVar, NormalVar, VarSurfResidual, GroundedMaskVar, HydroVar, DistanceVar, FrictionVar
   TYPE(ValueList_t), POINTER :: BC
   TYPE(Element_t), POINTER :: Element, CurElement, BoundaryElement
   TYPE(Nodes_t), SAVE :: Nodes
 
-  REAL(KIND=dp), POINTER :: NormalValues(:), ResidValues(:), GroundedMask(:), Hydro(:), Distance(:)
+  REAL(KIND=dp), POINTER :: NormalValues(:), ResidValues(:), GroundedMask(:), Hydro(:), &
+       Distance(:), FrictionValues(:)
   REAL(KIND=dp) :: Bdrag, t, told, thresh
   REAL(KIND=dp), ALLOCATABLE :: Normal(:), Fwater(:), Fbase(:)
 
-  INTEGER, POINTER :: NormalPerm(:), ResidPerm(:), GroundedMaskPerm(:), HydroPerm(:), DistancePerm(:)
+  INTEGER, POINTER :: NormalPerm(:), ResidPerm(:), GroundedMaskPerm(:), HydroPerm(:), &
+       DistancePerm(:), FrictionPerm(:)
   INTEGER :: nodenumber, ii, DIM, GL_retreat, n, tt, Nn, jj, MSum, ZSum
 
   LOGICAL :: FirstTime = .TRUE., GotIt, Yeschange, GLmoves, Friction,UnFoundFatal=.TRUE.
 
-  REAL (KIND=dp) ::  y, relChange, relChangeOld, Sliding_lilien, DummyCoef
+  REAL (KIND=dp) ::  y, relChange, relChangeOld, Sliding_Budd, Sliding_Weertman, Friction_Coulomb
 
   REAL(KIND=dp) :: comp, cond, TestContact
-  CHARACTER(LEN=MAX_NAME_LEN) :: USF_Name='SlidCoef_Contact', Sl_Law, GLtype
+  CHARACTER(LEN=MAX_NAME_LEN) :: USF_Name='SlidCoef_Contact', Sl_Law, GLtype, FrictionVarName
 
   SAVE FirstTime, yeschange, told, GLmoves, thresh, GLtype, TestContact
   SAVE DIM, USF_Name, Normal, Fwater, Fbase, relChangeOld, Sl_Law
-  CALL Info(USF_name,'Called', Level=3)
+  SAVE FrictionVar, FrictionValues, FrictionPerm, BC
 
 !----------------------------------------------------------------------------
 
@@ -190,8 +84,6 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
   GroundedMaskPerm => GroundedMaskVar % Perm
   
   relchange = Model % Solver % Variable % NonLinChange
-  
-  CALL Info(USF_name,'Got some basics', Level=3)
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! First time step for the First time
@@ -217,7 +109,7 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
      IF (.NOT.Gotit) THEN
         CALL FATAL(USF_Name,'No "Sliding law" Name given')
      END IF
-     
+
      GLtype = GetString( BC, 'Grounding Line Definition', GotIt )
      IF (.NOT.Gotit) THEN
         GLtype = 'last grounded'
@@ -244,7 +136,7 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
         TestContact = 1.0e-3     
         CALL Info(USF_Name, 'Contact will be tested for a tolerance of 1.0e-3', Level=3)
      ELSE
-        WRITE(Message, '(A)') 'Contact tolerance found'
+        WRITE(Message, '(A,e14.8)') 'Contact tested for a tolerance of ', TestContact
         CALL Info(USF_Name, Message, Level=3)
      END IF
      
@@ -261,8 +153,22 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
      ELSE
         CALL INFO( USF_Name, 'far inland nodes will not detach', level=3)
      END IF
-     CALL Info(USF_name,'First time complete', Level=3)
   ENDIF
+  
+  IF(Sl_Law(1:10) == 'prescribed') THEN
+     FrictionVarName = GetString( BC, 'Friction Variable Name', GotIt )
+     IF(.NOT. GotIt) CALL Fatal(USF_Name, 'Prescribed friction requested but no &
+          "Friction Variable Name" found!')
+     FrictionVar => VariableGet(Model % Mesh % Variables, FrictionVarName)
+     IF(ASSOCIATED(FrictionVar)) THEN
+        FrictionValues => FrictionVar % Values
+        FrictionPerm => FrictionVar % Perm
+     ELSE
+        WRITE(Message, '(A,A)') 'Unable to find variable: ',FrictionVarName
+        CALL Fatal(USF_Name, Message)
+     END IF
+  END IF
+
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! First time step for a New time
@@ -440,11 +346,19 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
      IF (Friction) THEN
         ! grounded node
         SELECT CASE(Sl_law)
-        CASE ('lilien')
-           ! Bdrag = Sliding_lilien(Model, nodenumber, y)
-           Bdrag = DummyCoef(Model, nodenumber, y)
+        CASE ('weertman')
+           Bdrag = Sliding_weertman(Model, nodenumber, y)
+        CASE ('budd')
+           Bdrag = Sliding_Budd(Model, nodenumber, y)
+        CASE ('coulomb')
+           Bdrag = Friction_Coulomb(Model, nodenumber, y)
+        CASE('prescribed beta2')
+           Bdrag = FrictionValues(FrictionPerm(nodenumber))**2.0_dp
+        CASE('prescribed power')
+           Bdrag = 10.0_dp**FrictionValues(FrictionPerm(nodenumber))
         CASE DEFAULT
-           Bdrag = DummyCoef(Model, nodenumber, y)
+           WRITE(Message, '(A,A)') 'Sliding law not recognised ',Sl_law
+           CALL FATAL( USF_Name, Message)
         END SELECT
      ELSE
         ! floating node
@@ -452,79 +366,9 @@ FUNCTION SlidCoef_Contact_lilien ( Model, nodenumber, y) RESULT(Bdrag)
      END IF
   ELSE
      ! for other surfaces, typically for lateral surfaces within buttressing experiments
-     ! Bdrag = Sliding_weertman(Model, nodenumber, y)
-     Bdrag = 0
+     Bdrag = Sliding_weertman(Model, nodenumber, y)
   END IF
-END FUNCTION SlidCoef_Contact_lilien
+END FUNCTION SlidCoef_Contact
 
-FUNCTION Sliding_lilien_simple (Model, nodenumber, vel) RESULT(Bdrag)
 
-  USE types
-  USE DefUtils
-  IMPLICIT NONE
-  TYPE(Model_t) :: Model
-  REAL (KIND=dp) :: y 
-  Real(kind=dp), dimension (1:2) :: vel
-  INTEGER :: nodenumber
-  
-  TYPE(ValueList_t), POINTER :: BC
-  INTEGER, POINTER :: NormalPerm(:)
-  INTEGER :: i, j, n
-  REAL (KIND=dp) :: C, m, Bdrag 
-  REAL (KIND=dp) :: ut, un, ut0
-  REAL (KIND=dp), ALLOCATABLE :: velo(:), AuxReal(:), mMat(:)
-  LOGICAL :: GotIt, FirstTime = .TRUE., SSA = .FALSE., UnFoundFatal
 
-  
-  CHARACTER(LEN=MAX_NAME_LEN) :: FlowSolverName, USF_name='Sliding_lilien_simple'
-
-  SAVE :: velo, SSA
-  SAVE :: FlowSolverName, FirstTime
-
-  CALL Info(USF_name,'Called', Level=17)
-   
-  IF (FirstTime) THEN
-     FirstTime = .FALSE.  
-     ALLOCATE(velo(2))
-     CALL Info(USF_name,'First time complete', Level=3)
-  END IF
-  
-  !Read the coefficients C and m in the sif file
-  BC => GetBC(Model % CurrentElement)
-  IF (.NOT.ASSOCIATED(BC))THEN
-     CALL Fatal('Sliding_Weertman', 'No BC Found')
-  END IF
-  CALL Info(USF_name,'Got BC', Level=17)
-  
-  n = GetElementNOFNodes()
-  ALLOCATE (auxReal(n))
-  auxReal(1:n) = GetReal( BC, 'Weertman Friction Coefficient', GotIt )
-  IF (.NOT.GotIt) THEN
-     CALL FATAL('USF_sliding', 'Need a Friction Coefficient for the Weertman sliding law')
-  END IF
-  DO i=1,n
-     IF (nodenumber == Model % CurrentElement % NodeIndexes( i )) EXIT 
-  END DO
-  C = auxReal(i)
-  DEALLOCATE(auxReal)
-  
-  ALLOCATE (mMat(n))
-  mMat(1:n) = GetReal( BC, 'Weertman Exponent', GotIt )
-  IF (.NOT.GotIt) THEN
-     CALL FATAL('USF_sliding', 'Need an Exponent for the Weertman sliding law')
-  END IF
-  DO i=1,n
-     IF (nodenumber == Model % CurrentElement % NodeIndexes( i )) EXIT 
-  END DO
-  m = mMat(i)
-  DEALLOCATE(mMat)
-  
-
-  ut0 = 1.0e-3
-  ! Get the variables to compute ut
-
-  ut = SQRT(vel(1)**2.0 + vel(2)**2 )
-  
-  ut = MAX(ut,ut0)
-  Bdrag = MIN(C * ut**(m-1.0),1.0e20)
-END FUNCTION Sliding_Lilien_simple

@@ -2,19 +2,32 @@
 
 if test "$ELMER_LIB" = ""; then
   if  test "$ELMER_HOME" = ""; then
-     LIBDIR=/usr/local/Cellar/elmer/8.0/share/elmersolver/../../lib/elmersolver
-     INCLUDE=/usr/local/Cellar/elmer/8.0/share/elmersolver/include
+     echo "No lib no home"
+     LIBDIR=/u/dlilien/sw/elmer/haswell_install/share/elmersolver/../../lib/elmersolver
+     INCLUDE=/u/dlilien/sw/elmer/haswell_install/share/elmersolver/include
   else
+     echo "Home no lib"
      LIBDIR=$ELMER_HOME/lib/elmersolver
+     LIBDIR2=$ELMER_HOME/lib/
      INCLUDE=$ELMER_HOME/share/elmersolver/include
   fi
 else
+  echo "Found lib"
   LIBDIR=$ELMER_LIB
   INCLUDE=$ELMER_LIB/../include
 fi
 
 if test "$ELMER_Fortran_COMPILER" = ""; then
-  FC=/usr/local/bin/gfortran
+    THISHOST=$(hostname)
+  if test $THISHOST = "loki.ess.washington.edu"; then
+      FC=/usr/bin/gfortran
+  else
+      if [ -d /nasa/intel/Compiler ]; then
+        FC=/nasa/intel/Compiler/2015.3.187/composer_xe_2015.3.187/bin/intel64/ifort
+       else
+        FC=/usr/bin/gfortran
+    fi
+  fi
 else
   FC=$ELMER_Fortran_COMPILER
 fi
