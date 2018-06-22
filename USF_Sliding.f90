@@ -372,7 +372,7 @@ FUNCTION Friction_Coulomb (Model, nodenumber, y) RESULT(Bdrag)
         Sn(i) = SUM(Sig(i,1:DIM)*normal(1:DIM)) 
      END DO
      ! Convention is such that Snn should be negative (compressive)
-     Snn = SUM( Sn(1:DIM) * normal(1:DIM) ) 
+     Snn = -ABS(SUM( Sn(1:DIM) * normal(1:DIM) ))
      Ne = -Snn -Pw
   ENDIF
 
@@ -383,7 +383,6 @@ FUNCTION Friction_Coulomb (Model, nodenumber, y) RESULT(Bdrag)
      Xi = MIN(Xi,1.0e20_dp)
   ELSE
      Xi = 1.0e20_dp 
-     write(*,*)'!!! Ne <=0, nodenumber',nodenumber, Ne
      Ne = 0.0       
   END IF
   

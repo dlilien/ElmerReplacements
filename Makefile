@@ -45,11 +45,15 @@ $(FORT_OBJECTS): %: %.f90
 $(C_OBJECTS): %: %.c
 	@ if [[ `hostname` =~ pfe* ]] ; then icc $< -o $@; else $(CC) $< -o $@ -lm ; fi
 
-test: testMelt
+test: testMelt testRead
 	./testMelt
+	./testRead
 
 testMelt: $(LIB) testMelt.f90
 	$(FCNS) -I./ MeltFunctions.f90 -o testMelt testMelt.f90
+
+testRead: $(LIB) testRead.f90
+	$(FCNS) -assume byterecl --I./ read_routines.f90 -o testRead testRead.f90
 
 clean:
 	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
