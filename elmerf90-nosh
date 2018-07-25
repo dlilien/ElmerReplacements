@@ -14,7 +14,7 @@ if test "$ELMER_LIB" = ""; then
 else
   echo "Found lib"
   LIBDIR=$ELMER_LIB
-  INCLUDE=$ELMER_LIB/../include
+  INCLUDE=$ELMER_LIB/../../share/elmersolver/include
 fi
 
 if test "$ELMER_Fortran_COMPILER" = ""; then

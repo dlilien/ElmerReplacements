@@ -2,6 +2,7 @@
 EXECUTABLES := AdjointSSASolvers
 
 OBJ=objects
+SRC=src
 
 _SOURCES := AdjointSolverSSA.F90 \
 	DJDp_Adjoint_SSA.F90 \
