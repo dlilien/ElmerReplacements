@@ -26,7 +26,7 @@
         REAL(KIND=dp) :: dt, total_melt, element_area, detJ, global_melt
         REAL(KIND=dp) :: mr, mf, melt_ratio, cubicmeters2gt, time, element_melt
         REAL(KIND=dp) :: meltrate, max_melt_rate=3000.0
-        REAL(KIND=dp) :: unpin_time
+        REAL(KIND=dp) :: unpin_time, rat
         LOGICAL :: TransientSimulation, stat, scalemelt, tv, UnfoundFatal
         LOGICAL :: getSecondDerivatives=.FALSE., found=.FALSE.
         LOGICAL :: firsttime=.TRUE.
@@ -126,42 +126,40 @@
             melt_ratio = 1.0_dp
         END IF
 
-        ! We can skip most of the calculations if we are not time
-        ! variable. Also i think we can just do this once per timestep
-        IF (GetCoupledIter() == 1) THEN
-            ! we start by integrating to find the total melt
-            total_melt = 0.0_dp
-            DO t=1,Solver % NumberOfActiveElements
-                CurrentElement => GetActiveElement(t)
-                CALL GetElementNodes(Nodes)
+        total_melt = 0.0_dp
+        DO t=1,Solver % NumberOfActiveElements
+            CurrentElement => GetActiveElement(t)
+            CALL GetElementNodes(Nodes)
 
-                n = GetElementNOFNodes(CurrentElement)
-                IF (n <= 2) THEN
-                    CYCLE
-                END IF
-                NodeIndexes => CurrentElement % NodeIndexes
-                DO i=1,n
-                    basemelt(i) = bmvals(bmperm(NodeIndexes(i)))
-                END DO
-
-                IP = GaussPoints(CurrentElement)
-                stat = ElementInfo( CurrentElement, Nodes, IP % U(t), IP % V(t), &
-                        IP % W(t), detJ, Basis, dBasisdx, ddBasisddx, &
-                        getSecondDerivatives)
-                ! The two in the next line is a little worrisome--i'm not
-                ! sure why i need it
-                element_melt = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n) * detJ) / 2.0_dp
-                meltrate = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n))
-
-
-                IF ((element_melt /= 0.0_dp).AND.(element_melt == element_melt).AND.(ABS(meltrate) < max_melt_rate)) THEN
-                    total_melt = total_melt + element_melt
-                END IF
+            n = GetElementNOFNodes(CurrentElement)
+            IF (n <= 2) THEN
+                CYCLE
+            END IF
+            NodeIndexes => CurrentElement % NodeIndexes
+            DO i=1,n
+                basemelt(i) = bmvals(bmperm(NodeIndexes(i)))
             END DO
 
-            ! this line merges parallel partitions to one. flag arg is sum/min/max
-            global_melt = ParallelReduction(total_melt, 0)
-        END IF
+            IP = GaussPoints(CurrentElement)
+            stat = ElementInfo( CurrentElement, Nodes, IP % U(t), IP % V(t), &
+                    IP % W(t), detJ, Basis, dBasisdx, ddBasisddx, &
+                    getSecondDerivatives)
+            ! The two in the next line is a little worrisome--i'm not
+            ! sure why i need it
+            element_melt = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n)  * detJ) / 2.0_dp
+            ! we also want the rate so that we know if we are too high
+            meltrate = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n))
+
+
+            IF ((element_melt /= 0.0_dp).AND.(element_melt == element_melt).AND.(ABS(meltrate) < max_melt_rate)) THEN
+                total_melt = total_melt + element_melt
+            ELSE IF ((element_melt /= 0.0_dp).AND.(element_melt == element_melt).AND.(ABS(meltrate).GE.max_melt_rate)) THEN
+                total_melt = total_melt + max_melt_rate
+            END IF
+        END DO
+
+        ! this line merges parallel partitions to one. flag arg is sum/min/max
+        global_melt = ParallelReduction(total_melt, 0)
 
         ! Now if we are time variable we need to find our present melt ratio
         ! We need to avoid overriding a fixed rate from previous solvers
@@ -199,8 +197,25 @@
             NodeIndexes => CurrentElement % NodeIndexes
             DO i=1,n
                 basemelt(i) = bmvals(bmperm(NodeIndexes(i)))
+            END DO
+
+            IP = GaussPoints(CurrentElement)
+            stat = ElementInfo( CurrentElement, Nodes, IP % U(t), IP % V(t), &
+                    IP % W(t), detJ, Basis, dBasisdx, ddBasisddx, &
+                    getSecondDerivatives)
+
+            meltrate = SUM( BaseMelt(1:IP % n) * Basis(1:IP % n))
+
+            if (meltrate.GE.max_melt_rate) then
+                rat = max_melt_rate / meltrate
+            else
+                rat = 1.0
+            END IF
+
+            DO i=1,n
+                basemelt(i) = bmvals(bmperm(NodeIndexes(i)))
                 k = Permutation(NodeIndexes(i))
-                VariableValues(k) = basemelt(i) * melt_ratio
+                VariableValues(k) = basemelt(i) * melt_ratio * rat
             END DO
         END DO
         RETURN
