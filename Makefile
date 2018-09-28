@@ -28,13 +28,13 @@ C_OBJECTS=$(C_SOURCES:.c=)
 
 all: compile AdjointSSASolvers
 
-compile: $(MODULE) $(LIB_OBJECTS) $(LIB) $(C_OBJECTS) $(SOLVER)
+compile: $(MODULE) $(LIB_OBJECTS) $(SOLVER_OBJECTS) $(LIB) $(C_OBJECTS) $(SOLVER)
 	
 AdjointSSASolvers:
 	$(MAKE) -C src/AdjointSSA compile
 
 $(LIB): $(MODULE) $(LIB_OBJECTS)
-	$(FC) $(LIB_OBJECTS) $(MODULE) -I . -o $@
+	$(FC) $(LIB_OBJECTS) $(SOLVER_OBJECTS) $(MODULE) -I . -o $@
 
 $(SOLVER): $(SOLVER_OBJECTS)
 	$(FC) $(SOLVER_OBJECTS) -o $@

@@ -56,7 +56,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
   REAL(KIND=dp), POINTER :: VariableValues(:)
   REAL(KIND=dp) :: x, y, z, toler, time
   REAL(KIND=dp), ALLOCATABLE :: zb(:)
-  REAL(KIND=dp) :: times(72)
+  REAL(KIND=dp) :: times(73)
   REAL,ALLOCATABLE :: dem(:,:),xx(:),yy(:)
 
 
@@ -69,11 +69,11 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
 
   IF (FirstTime) THEN
       FirstTime = .FALSE.
-      DO i = 1,72
-         times(i) = 0.25_dp * i + 1996.0_dp
+      DO i = 0,72
+         times(i + 1) = 0.25_dp * i + 1996.0_dp
       END DO
       fmt_fname = "(A, F7.2, A)"
-      old_times_ind = 0
+      old_times_ind = -20.0
   END IF
 
 !  NULLIFY(bedrockPerm,bedrockVar)
@@ -128,9 +128,9 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
   !--------------------------------------------------------------
   IF (Time <= 18.0_dp) THEN
       Time = Time + 1996.0_dp
-      TimesInd = MINVAL(ABS(Times - time))
+      TimesInd = MINLOC(ABS(Times - time), 1)
       IF (old_times_ind .NE. TimesInd) THEN
-         write(filename, fmt_fname) "/nobackup/dlilien/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".tif"
+         write(filename, fmt_fname) "/data/rd04/dal22/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
          Firsttime=.False.
          call get_twod_grid(filename, xx, yy, dem)
          WRITE(Message,'(A)') 'Loaded new gmask'
@@ -166,6 +166,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
      END SELECT
      
      CALL GetElementNodes( Nodes )
+
      
      DO i = 1, n
         Nn = Permutation(Element % NodeIndexes(i))
