@@ -11,8 +11,8 @@ FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
 CC=/usr/bin/gcc
-LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 GroundedSolverSSA.f90 melt_solver.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90
-SOLVER_SOURCES=melt_solver.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 GroundedSolverSSA.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90
+SOLVER_SOURCES=melt_solver.f90 manual_grounding.f90
 MODULE_SOURCES=read_routines.f90 MeltFunctions.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)

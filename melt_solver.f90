@@ -124,7 +124,9 @@
             CLOSE(12)
 
             melt_ratio = 1.0_dp
+            write(*, *) 'end first-time step'
         END IF
+        write(*, *) 'We are past the first-time step in melt_solver'
 
         total_melt = 0.0_dp
         DO t=1,Solver % NumberOfActiveElements
@@ -157,9 +159,11 @@
                 total_melt = total_melt + max_melt_rate
             END IF
         END DO
+        write(*, *) 'We have found the melt, etc'
 
         ! this line merges parallel partitions to one. flag arg is sum/min/max
         global_melt = ParallelReduction(total_melt, 0)
+        write(*, *) 'We have reduced the melt'
 
         ! Now if we are time variable we need to find our present melt ratio
         ! We need to avoid overriding a fixed rate from previous solvers
@@ -169,6 +173,8 @@
         IF (tv.AND.((Time <= unpin_time).OR.firsttime)) THEN
             mr = 41309491925.9_dp * RescaleByTime(Time + 1996.0_dp)
         END IF
+
+        write(*,*) 'We have rescaled by time'
 
         ! we only update the melt_ratio if we are less than the unpin time
         IF ((Time <= unpin_time).OR.firsttime) THEN
@@ -218,5 +224,6 @@
                 VariableValues(k) = basemelt(i) * melt_ratio * rat
             END DO
         END DO
+        write(*, *) 'We have done it all'
         RETURN
       END
