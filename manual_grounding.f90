@@ -137,6 +137,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
          CALL INFO('GroundedSolver',Message,Level=3)
          nx = SIZE(xx)
          ny = SIZE(yy)
+         old_times_ind = TimesInd
       END IF
   END IF
 
@@ -183,6 +184,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
             VariableValues(Nn) = LID(dem, xx, yy, nx, ny, x, y, 1.0)
             IF (VariableValues(Nn) > 0.5_dp) THEN
                 VariableValues(Nn) = -1.0_dp
+                zb(i) = -9999.0_dp
             ELSE
                 VariableValues(Nn) = 1.0_dp
             END IF
