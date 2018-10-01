@@ -49,11 +49,11 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
   LOGICAL :: AllocationsDone = .FALSE., GotIt, stat, firsttime=.TRUE.
 
   INTEGER :: nx,ny
-  INTEGER :: i, mn, n, t, Nn, istat, DIM, MSum, ZSum, bedrockSource
+  INTEGER :: i, mn, n, t, Nn, istat, DIM, MSum, ZSum, bedrockSource, Nnbr
   INTEGER :: TimesInd, old_times_ind
   INTEGER, POINTER :: Permutation(:), bedrockPerm(:)
 
-  REAL(KIND=dp), POINTER :: VariableValues(:)
+  REAL(KIND=dp), POINTER :: VariableValues(:), BedrockValues(:)
   REAL(KIND=dp) :: x, y, z, toler, time
   REAL(KIND=dp), ALLOCATABLE :: zb(:)
   REAL(KIND=dp) :: times(73)
@@ -126,8 +126,8 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
   !--------------------------------------------------------------
   ! Grounded/floating loop based on height of base above bedrock.
   !--------------------------------------------------------------
-  IF (Time <= 18.0_dp) THEN
-      Time = Time + 1996.0_dp
+  Time = Time + 1996.0_dp
+  IF (Time <= 2014.0_dp) THEN
       TimesInd = MINLOC(ABS(Times - time), 1)
       IF (old_times_ind .NE. TimesInd) THEN
          write(filename, fmt_fname) "/data/rd04/dal22/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
@@ -152,8 +152,6 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
         IF (.NOT. ASSOCIATED(bedrockVar)) CALL FATAL(SolverName,"Could not find bedrock variable")
         bedrockPerm => bedrockVar % Perm
         zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
-        NULLIFY(bedrockPerm)
-        NULLIFY(bedrockVar)
      CASE (MATERIAL_NAMED)
         Material => GetMaterial( Element )
         zb(1:n) = ListGetReal( Material,bedrockName, n , & 
@@ -168,9 +166,11 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
      
      CALL GetElementNodes( Nodes )
 
+     BedrockValues => bedrockVar % Values
      
      DO i = 1, n
         Nn = Permutation(Element % NodeIndexes(i))
+        Nnbr = bedrockPerm(Element % NodeIndexes(i))
         IF (Nn==0) CYCLE
         IF (DIM == 2) THEN
            z = Nodes % y( i )
@@ -184,7 +184,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
             VariableValues(Nn) = LID(dem, xx, yy, nx, ny, x, y, 1.0)
             IF (VariableValues(Nn) > 0.5_dp) THEN
                 VariableValues(Nn) = -1.0_dp
-                zb(i) = -9999.0_dp
+                BedrockValues(Nnbr) = -9999.0_dp
             ELSE
                 VariableValues(Nn) = 1.0_dp
             END IF
