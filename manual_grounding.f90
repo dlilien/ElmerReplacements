@@ -130,7 +130,7 @@ SUBROUTINE GroundedSolver( Model,Solver,dt,TransientSimulation )
       Time = Time + 1996.0_dp
       TimesInd = MINLOC(ABS(Times - time), 1)
       IF (old_times_ind .NE. TimesInd) THEN
-         write(filename, fmt_fname) "/data/rd04/dal22/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
+         write(filename, fmt_fname) "/nobackup/dlilien/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
          Firsttime=.False.
          call get_twod_grid(filename, xx, yy, dem)
          WRITE(Message,'(A)') 'Loaded new gmask'
