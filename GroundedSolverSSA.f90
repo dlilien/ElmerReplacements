@@ -129,22 +129,13 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
      Element => GetActiveElement(t)
      n = GetElementNOFNodes()
      
-     SELECT CASE(bedrockSource)
-     CASE (VARIABLE)
-        bedrockVar => VariableGet(Model % Mesh % Variables, bedrockName,UnFoundFatal=UnFoundFatal)
-        bedrockPerm => bedrockVar % Perm
-        zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
-     CASE (MATERIAL_NAMED)
-        Material => GetMaterial( Element )
-        zb(1:n) = ListGetReal( Material,bedrockName, n , & 
-             Element % NodeIndexes, GotIt,UnFoundFatal=UnFoundFatal) + toler
-     CASE (MATERIAL_DEFAULT)
-        Material => GetMaterial( Element )
-        zb(1:n) = ListGetReal( Material,'Min Zs Bottom',n , & 
-             Element % NodeIndexes, GotIt,UnFoundFatal=UnFoundFatal) + toler
-     END SELECT
+     bedrockVar => VariableGet(Model % Mesh % Variables, bedrockName,UnFoundFatal=UnFoundFatal)
+     bedrockPerm => bedrockVar % Perm
+     zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
+     Material => GetMaterial( Element )
 
-     bedVar => VariableGet(Model % Mesh % Variables, bedrockName, UnFoundFatal=UnFoundFatal)
+
+     bedVar => VariableGet(Model % Mesh % Variables, bedName, UnFoundFatal=UnFoundFatal)
      bedPerm => bedVar % Perm
      BedrockValues => bedrockVar % Values
      zbs(1:n) = bedVar % values(bedPerm(Element % NodeIndexes))
