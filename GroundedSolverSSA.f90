@@ -28,10 +28,10 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
   LOGICAL :: GotIt, stat,UnFoundFatal=.TRUE., firsttime=.TRUE.
 
   INTEGER :: nx, ny, TimesInd, Old_times_ind
-  INTEGER :: i, mn, n, t, Nn, istat, DIM, MSum, ZSum, bedrockSource
+  INTEGER :: i, mn, n, t, Nn, istat, DIM, MSum, ZSum, bedrockSource, Nnbr
   INTEGER, POINTER :: Permutation(:), bedrockPerm(:), bedPerm(:)
 
-  REAL(KIND=dp), POINTER :: VariableValues(:)
+  REAL(KIND=dp), POINTER :: VariableValues(:), BedrockValues(:)
   REAL(KIND=dp) :: z, toler, x, y, time
   REAL(KIND=dp), ALLOCATABLE :: zb(:), zbs(:)
   REAL(KIND=dp) :: times(73)
@@ -108,12 +108,11 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
      CALL FATAL(SolverName, 'You need to input a \"Bed Variable\"')
  END IF
      
-  IF (Time <= 18.0_dp) THEN
-      Time = Time + 1996.0_dp
+  Time = Time + 1996.0_dp
+  IF (Time <= 2014.0_dp) THEN
       TimesInd = MINLOC(ABS(Times - time), 1)
       IF (old_times_ind .NE. TimesInd) THEN
          write(filename, fmt_fname) "/nobackup/dlilien/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
-         Firsttime=.False.
          call get_twod_grid(filename, xx, yy, dem)
          WRITE(Message,'(A)') 'Loaded new gmask'
          CALL INFO('GroundedSolver',Message,Level=3)
@@ -129,35 +128,25 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
   DO t = 1, Solver % NumberOfActiveElements
      Element => GetActiveElement(t)
      n = GetElementNOFNodes()
-     
-     SELECT CASE(bedrockSource)
-     CASE (VARIABLE)
-        bedrockVar => VariableGet(Model % Mesh % Variables, bedrockName,UnFoundFatal=UnFoundFatal)
-        bedrockPerm => bedrockVar % Perm
-        zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
-        NULLIFY(bedrockPerm)
-        NULLIFY(bedrockVar)
-     CASE (MATERIAL_NAMED)
-        Material => GetMaterial( Element )
-        zb(1:n) = ListGetReal( Material,bedrockName, n , & 
-             Element % NodeIndexes, GotIt,UnFoundFatal=UnFoundFatal) + toler
-     CASE (MATERIAL_DEFAULT)
-        Material => GetMaterial( Element )
-        zb(1:n) = ListGetReal( Material,'Min Zs Bottom',n , & 
-             Element % NodeIndexes, GotIt,UnFoundFatal=UnFoundFatal) + toler
-     END SELECT
+    
+     bedrockVar => VariableGet(Model % Mesh % Variables, bedrockName,UnFoundFatal=UnFoundFatal)
+     bedrockPerm => bedrockVar % Perm
+     zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
+     Material => GetMaterial( Element )
 
-     bedVar => VariableGet(Model % Mesh % Variables, bedname, UnFoundFatal=UnFoundFatal)
+
+     bedVar => VariableGet(Model % Mesh % Variables, bedName, UnFoundFatal=UnFoundFatal)
      bedPerm => bedVar % Perm
+     BedrockValues => bedrockVar % Values
      zbs(1:n) = bedVar % values(bedPerm(Element % NodeIndexes))
      NULLIFY(bedPerm)
-
      NULLIFY(bedVAR)
 
      CALL GetElementNodes( Nodes )
      
      DO i = 1, n
         Nn = Permutation(Element % NodeIndexes(i))
+        Nnbr = bedrockPerm(Element % NodeIndexes(i))
         IF (Nn==0) CYCLE
         z = zbs(i)
 
@@ -167,7 +156,7 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
             VariableValues(Nn) = LID(dem, xx, yy, nx, ny, x, y, 1.0)
             IF (VariableValues(Nn) > 0.5_dp) THEN
                 VariableValues(Nn) = -1.0_dp
-                zb(i) = -9999.0_dp
+                BedrockValues(Nnbr) = -9999.0_dp
             ELSE
                 VariableValues(Nn) = 1.0_dp
             END IF
