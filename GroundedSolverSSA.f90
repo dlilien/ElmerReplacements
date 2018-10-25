@@ -112,7 +112,7 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
   IF (Time <= 2014.0_dp) THEN
       TimesInd = MINLOC(ABS(Times - time), 1)
       IF (old_times_ind .NE. TimesInd) THEN
-         write(filename, fmt_fname) "/data/rd04/dal22/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
+         write(filename, fmt_fname) "/nobackup/dlilien/smith_inputs/masks/interp_gl/newmask_interp_", Times(TimesInd), ".xyz"
          call get_twod_grid(filename, xx, yy, dem)
          WRITE(Message,'(A)') 'Loaded new gmask'
          CALL INFO('GroundedSolver',Message,Level=3)
@@ -128,7 +128,7 @@ SUBROUTINE GroundedSolverSSAManual( Model,Solver,dt,TransientSimulation )
   DO t = 1, Solver % NumberOfActiveElements
      Element => GetActiveElement(t)
      n = GetElementNOFNodes()
-     
+    
      bedrockVar => VariableGet(Model % Mesh % Variables, bedrockName,UnFoundFatal=UnFoundFatal)
      bedrockPerm => bedrockVar % Perm
      zb(1:n) =  bedrockVar % values(bedrockPerm(Element % NodeIndexes)) + toler
