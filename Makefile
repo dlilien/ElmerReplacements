@@ -11,12 +11,13 @@ FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
 CC=/usr/bin/gcc
-LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90 USF_Zs.f90
-SOLVER_SOURCES=melt_solver.f90 manual_grounding.f90 GroundedSolverSSA.f90
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90 USF_Zs.f90 AIFlowFricHeat.f90
+SOLVER_SOURCES=melt_solver.f90 manual_grounding.f90 GroundedSolverSSA.f90 FabricSolve.f90
 MODULE_SOURCES=read_routines.f90 MeltFunctions.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
 LIB_OBJECTS=$(LIB_SOURCES:.f90=.o)
 SOLVER_OBJECTS=$(SOLVER_SOURCES:.f90=.o)
+SOLVER_SINGLES=$(SOLVER_SOURCES:.f90=.so)
 LIB=lilien_lib.so
 SOLVER=lilien_solver.so
 
@@ -28,7 +29,7 @@ C_OBJECTS=$(C_SOURCES:.c=)
 
 all: compile AdjointSSASolvers
 
-compile: $(MODULE) $(LIB_OBJECTS) $(SOLVER_OBJECTS) $(LIB) $(C_OBJECTS) $(SOLVER)
+compile: $(MODULE) $(LIB_OBJECTS) $(SOLVER_SINGLES) $(LIB) $(C_OBJECTS) $(SOLVER)
 	
 AdjointSSASolvers:
 	$(MAKE) -C src/AdjointSSA compile
@@ -47,6 +48,9 @@ $(LIB_OBJECTS): %.o: %.f90
 
 $(SOLVER_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@
+
+$(SOLVER_SINGLES): %.so: %.o
+	$(FC) $< -o $@
 
 $(FORT_OBJECTS): %: %.f90
 	./elmerf90-nosh $< -o $@
