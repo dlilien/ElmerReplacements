@@ -39,6 +39,17 @@
         return
         END
 
+        FUNCTION MuHomologous( Model, nodenumber, T ) Result(m)
+        USE types
+        implicit none
+        TYPE(Model_t) :: Model
+        Integer :: nodenumber
+        Real(kind=dp) :: T, m, glenHomologous
+        Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
+        m=sqrt(glenHomologous(T) * yearinsec ** (-1.0_dp/3.0_dp) * 1.0e-6_dp)
+        return
+        END
+
         FUNCTION ViscCelcius( Model, nodenumber, T ) Result(m)
         USE types
         implicit none
@@ -90,6 +101,18 @@
         END
 
         FUNCTION glenCelcius( Model, nodenumber, T ) Result(g)
+        USE types
+        implicit none
+        TYPE(Model_t) :: Model
+        Real(kind=dp) :: T
+        Real(kind=dp) :: g, ArrheniusFactorCelcius
+        Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
+        INTEGER :: nodenumber
+        g=(2.0_dp*ArrheniusFactorCelcius(T))**(-1.0_dp/3.0_dp)
+        Return
+        END
+
+        FUNCTION glenHomologous( Model, nodenumber, T ) Result(g)
         USE types
         implicit none
         TYPE(Model_t) :: Model
