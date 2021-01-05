@@ -46,7 +46,7 @@
         Integer :: nodenumber
         Real(kind=dp) :: T, m, glenHomologous
         Real(kind=dp) :: yearinsec=365.25_dp*24.0_dp*60.0_dp*60.0_dp
-        m=sqrt(glenHomologous(T) * yearinsec ** (-1.0_dp/3.0_dp) * 1.0e-6_dp)
+        m=sqrt(glenHomologous(Model, nodenumber, T) * yearinsec ** (-1.0_dp/3.0_dp) * 1.0e-6_dp)
         return
         END
 
