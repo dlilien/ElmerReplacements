@@ -399,8 +399,8 @@
                         IF ( found ) EXIT
                         DO y_sign=1,2
                             IF ( found ) EXIT
-                            nx_2=nx_1 + x_sign * i
-                            ny_2=ny_1 + y_sign * j
+                            nx_2=nx_1 + signs(x_sign) * i
+                            ny_2=ny_1 + signs(y_sign) * j
                             nx_2=min(nx_2,nx-1)
                             ny_2=min(ny_2,ny-1)
                             nx_2=max(nx_2,1)
@@ -414,6 +414,7 @@
                 enddo
             enddo
         else
+            write(*,*) minval(b), maxval(b)
             do i=0,1
                 do j=0,1
                     dist = max( dabs(x-xx(nx_1+i)),dabs(y-yy(ny_1+j)) )
