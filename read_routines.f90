@@ -344,5 +344,90 @@
         Return
         End
 
+        Function LIDEXTRAP(dem,xx,yy,nx,ny,x,y,def) Result(InterP1)
+        USE TYPES
+        implicit none
+        REAL :: dem(nx,ny),xx(nx),yy(ny)
+        REAL :: Dx,Dy,DxDy
+        Real(kind=dp) :: x,y
+        REAL :: x_1,y_1,dist,B(4),signs(2)
+        Real :: def
+        Real(kind=dp) :: InterP1
+        integer :: nx,ny,i,j
+        integer :: nx_1,ny_1,x_sign,y_sign,nx_2,ny_2
+        logical :: found
+        signs = (/ -1, 1 /)
+
+        Dx=(xx(nx)-xx(1))/(nx-1)
+        Dy=(yy(ny)-yy(1))/(ny-1)
+        DxDy=Dx*Dy
+
+        ! lower left point in DEM
+        nx_1=floor((x-xx(1))/Dx) + 1
+        ny_1=floor((y-yy(1))/Dy) + 1
+        nx_1=min(nx_1,nx-1)
+        ny_1=min(ny_1,ny-1)
+        nx_1=max(nx_1,1)
+        ny_1=max(ny_1,1)
+
+        x_1=xx(nx_1)
+        y_1=yy(ny_1)
+
+
+        ! DEM Value in surroundings points
+        !       4 ----- 3
+        !       |       |
+        !       1 ----- 2
+        B(1)=dem(nx_1,ny_1)
+        B(2)=dem(nx_1+1,ny_1)
+        B(3)=dem(nx_1+1,ny_1+1)
+        B(4)=dem(nx_1,ny_1+1)
+
+        found = .false.
+        InterP1 = def
+        if (minval(B)/=-2e+9) then
+            ! Linear Interpolation at Point x,y
+            InterP1=(x-x_1)*(y-y_1)*(B(3)+B(1)-B(2)-B(4))/DxDy
+            InterP1=InterP1+(x-x_1)*(B(2)-B(1))/Dx+(y-y_1)*(B(4)-B(1))/Dy+B(1)
+            found = .true.
+        else if (maxval(B).EQ.-2e+9) then
+            do i=0,nx
+                IF ( found ) EXIT
+                do j=0,ny
+                    IF ( found ) EXIT
+                    DO x_sign=1,2
+                        IF ( found ) EXIT
+                        DO y_sign=1,2
+                            IF ( found ) EXIT
+                            nx_2=nx_1 + x_sign * i
+                            ny_2=ny_1 + y_sign * j
+                            nx_2=min(nx_2,nx-1)
+                            ny_2=min(ny_2,ny-1)
+                            nx_2=max(nx_2,1)
+                            ny_2=max(ny_2,1)
+                            IF ( dem(nx_2, ny_2)/=-2e+9 ) THEN
+                                interp1 = dem(nx_2, ny_2)
+                                found = .TRUE.
+                            END IF
+                        enddo
+                    enddo
+                enddo
+            enddo
+        else
+            do i=0,1
+                do j=0,1
+                    dist = max( dabs(x-xx(nx_1+i)),dabs(y-yy(ny_1+j)) )
+                    if (dist<=0.5*dx .and. dem(nx_1+i,ny_1+j)/=-2e+9) then
+                        InterP1 = dem(nx_1+i,ny_1+j)
+                        found = .true.
+                    endif
+                enddo
+            enddo
+        endif
+        Return
+        End
+
+
+
        end module read_routines
 
