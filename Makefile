@@ -10,8 +10,8 @@ SHELL=/bin/bash
 FCB=ifort -fPIC
 FC=elmerf90
 FCNS=./elmerf90-nosh
-CC=/usr/bin/gcc
-LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90 USF_Zs.f90 AIFlowFricHeat.f90
+CC=icc
+LIB_SOURCES=borstad_damage.f90 DJDmu_Adjoint_lilien.f90 MATC_Replacements.f90 DAViscosityInversion.f90 g2di.f90 Cost_Functions.f90 DummySolver.f90 USF_Sliding.f90 USF_Contact.f90 USF_GetFrictionHeating.f90 lilien_sliding.f90 USF_Zs.f90 AIFlowFricHeat.f90 MF.f90
 SOLVER_SOURCES=melt_solver.f90 manual_grounding.f90 GroundedSolverSSA.f90 FabricSolve.f90
 MODULE_SOURCES=read_routines.f90 MeltFunctions.f90
 MODULE=$(MODULE_SOURCES:.f90=.o)
@@ -35,13 +35,13 @@ AdjointSSASolvers:
 	$(MAKE) -C src/AdjointSSA compile
 
 $(LIB): $(MODULE) $(LIB_OBJECTS)
-	$(FC) $(LIB_OBJECTS) $(SOLVER_OBJECTS) $(MODULE) -I . -o $@
+	$(FC) $(LIB_OBJECTS) $(SOLVER_OBJECTS) $(MODULE_SOURCES) -I . -o $@
 
 $(SOLVER): $(SOLVER_OBJECTS)
 	$(FC) $(SOLVER_OBJECTS) -o $@
 
 $(MODULE): %.o: %.f90
-	@ if [[ `hostname` =~ pfe* ]] ; then $(FC) -assume byterecl -c $< -o $@; else $(FC) -c $< -o $@ -lm ; fi
+	@ if [[ `hostname` =~ g-* ]] ; then $(FC) -assume byterecl -c $< -o $@; else $(FC) -c $< -o $@ -lm ; fi
 
 $(LIB_OBJECTS): %.o: %.f90
 	$(FC) -c $< -o $@
@@ -69,5 +69,5 @@ testRead: $(LIB) testRead.f90
 	$(FCNS) -assume byterecl --I./ read_routines.f90 -o testRead testRead.f90
 
 clean:
-	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh
+	-rm -f *.o *.so MshGlacierDEM ExtrudeMesh *.mod
 	$(MAKE) -C src/AdjointSSA clean

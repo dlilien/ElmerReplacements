@@ -414,7 +414,6 @@
                 enddo
             enddo
         else
-            write(*,*) minval(b), maxval(b)
             do i=0,1
                 do j=0,1
                     dist = max( dabs(x-xx(nx_1+i)),dabs(y-yy(ny_1+j)) )
