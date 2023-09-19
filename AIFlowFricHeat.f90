@@ -124,3 +124,63 @@ FUNCTION getFrictionHeatAIFlow(  Model, Node, DummyInput)RESULT(frictionheat)
 
   frictionHeat =ut*Snt
 END FUNCTION getFrictionHeatAIFlow
+
+FUNCTION getFrictionLoadsLinearFric(  Model, Node, FricCoeff )RESULT(frictionLoad)
+  
+  USE DefUtils
+
+  IMPLICIT NONE
+  
+  !------------------------------------------------------------------------------
+  TYPE(Model_t) :: Model
+  INTEGER :: Node
+  REAL(KIND=dp) :: FricCoeff, frictionLoad
+  !----------------------------------------------------------------------------
+
+  INTEGER :: DIM, i
+  REAL(KIND=dp), POINTER :: FlowValues(:),NormalValues(:)
+  REAL(KIND=dp) :: normal(3), velo(3), normalvelocity, tangvelocity(3), pressure 
+  INTEGER, POINTER :: FlowPerm(:),FlowLoadPerm(:), NormalPerm(:)
+  LOGICAL :: FirstTime=.TRUE., GotIt,UnFoundFatal
+  TYPE(Variable_t), POINTER :: FlowSol,FlowLoadSol, NormalVar
+  CHARACTER(LEN=MAX_NAME_LEN) :: FunctionName, FlowSolutionName, FlowLoadsName
+
+  SAVE FirstTime, FunctionName, DIM
+
+  IF (FirstTime) THEN
+     WRITE(FunctionName,'(A)') 'USF_GetFrictionHeating(getFrictionLoads)'
+     FirstTime = .FALSE.    
+     DIM = CoordinateSystemDimension()
+  END IF
+  ! Get the variable velocity
+  !---------------------------
+  FlowSolutionName = GetString( Model % Solver % Values , 'Flow Solver Name', GotIt ) 
+  IF (.NOT. GotIt) THEN
+     WRITE(FlowSolutionName,'(A)') 'Flow Solution'
+  END IF
+  FlowSol => VariableGet( Model % Variables, TRIM(FlowSolutionName),UnFoundFatal=UnFoundFatal)
+  FlowPerm    => FlowSol % Perm
+  FlowValues  => FlowSol % Values
+
+  ! Get the variable for normal vector
+  !-----------------------------------
+  NormalVar =>  VariableGet(Model % Variables,'Normal Vector',UnFoundFatal=UnFoundFatal)
+  NormalPerm => NormalVar % Perm
+  NormalValues => NormalVar % Values
+  
+
+  DO i=1, DIM
+     normal(i) = NormalValues(DIM*(NormalPerm(Node)-1) + i)      
+     velo(i) = FlowValues( (DIM+1)*(FlowPerm(Node)-1) + i )
+  END DO
+  pressure = FlowValues((DIM + 1) * FlowPerm(Node))
+ 
+  normalvelocity    = SUM( velo(1:DIM) * normal(1:DIM) )
+
+  DO i=1, DIM
+     tangvelocity(i) = velo(i) - normalvelocity * normal(i)
+  END DO
+
+  frictionLoad = &
+       MAX( (-1.0_dp * SUM(tangvelocity(1:DIM)) * fricCoeff * pressure), 0.0_dp)
+END FUNCTION getFrictionLoadsLinearFric

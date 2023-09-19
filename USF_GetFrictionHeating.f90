@@ -200,6 +200,8 @@ FUNCTION getFrictionLoads(  Model, Node, DummyInput )RESULT(frictionLoad)
   NormalVar =>  VariableGet(Model % Variables,'Normal Vector',UnFoundFatal=UnFoundFatal)
   NormalPerm => NormalVar % Perm
   NormalValues => NormalVar % Values
+
+  write(*,*) "Did it done"
   
 
   DO i=1, DIM
